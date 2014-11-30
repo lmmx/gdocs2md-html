@@ -7,12 +7,13 @@ Usage:
     - Tools > Script Manager
     - Select "ConvertToMarkdown" function.
     - Click Run button.
-    - Converted doc will be mailed to you. Subject will be "[MARKDOWN_MAKER]...".
+    - Converted doc will be added to a ".md" folder in the source document's directories
 */
 
 function ConvertToMarkdown() {
   var numChildren = DocumentApp.getActiveDocument().getActiveSection().getNumChildren();
   var text = "";
+  var md_filename = DocumentApp.getActiveDocument().getName()+".md";
   var inSrc = false;
   var inClass = false;
   var globalImageCounter = 0;
@@ -20,7 +21,7 @@ function ConvertToMarkdown() {
   // edbacher: added a variable for indent in src <pre> block. Let style sheet do margin.
   var srcIndent = "";
   
-  var attachments = [];
+  var files = [];
   
   // Walk through all the child elements of the doc.
   for (var i = 0; i < numChildren; i++) {
@@ -56,10 +57,9 @@ function ConvertToMarkdown() {
       
       if (result.images && result.images.length>0) {
         for (var j=0; j<result.images.length; j++) {
-          attachments.push( {
-            "fileName": result.images[j].name,
-            "mimeType": result.images[j].type,
-            "content": result.images[j].bytes } );
+          files.push( {
+            "blob": result.images[j].blob
+          } );
         }
       }
     } else if (inSrc) { // support empty lines inside source code
@@ -67,14 +67,39 @@ function ConvertToMarkdown() {
     }
       
   }
+  files.push({"fileName": md_filename, "mimeType": "text/plain", "content": text});
   
-  attachments.push({"fileName":DocumentApp.getActiveDocument().getName()+".md", "mimeType": "text/plain", "content": text});
+  // Create a md_folder that mirror sthe name of our new markdown document and put it in every parent directory
+  var md_folder = DriveApp.createFolder(md_filename);
+  DriveApp.removeFolder(md_folder); // Confusing convention; this just removes the folder from the google drive root. 
+
+  source_document_folders = DriveApp.getFileById(DocumentApp.getActiveDocument().getId()).getParents()  
+  while (source_document_folders.hasNext()) {
+    var folder = source_document_folders.next();
+    
+    // Cleanup any old folder with an identical name
+    var old_folders = folder.getFoldersByName(md_filename)
+    
+    while (old_folders.hasNext()) {
+      var old_folder = old_folders.next();
+      old_folder.setTrashed(true)
+    }
+    
+    // And add the new folder
+    folder.addFolder(md_folder)
+  }
   
-  MailApp.sendEmail(Session.getActiveUser().getEmail(), 
-                    "[MARKDOWN_MAKER] "+DocumentApp.getActiveDocument().getName(), 
-                    "Your converted markdown document is attached (converted from "+DocumentApp.getActiveDocument().getUrl()+")"+
-                    "\n\nDon't know how to use the format options? See http://github.com/mangini/gdocs2md\n",
-                    { "attachments": attachments });
+  for (var i = 0; i < files.length; i++) { 
+    var saved_file; 
+    if (files[i].blob) {
+      saved_file = DriveApp.createFile(files[i].blob)
+    } else { 
+      saved_file = DriveApp.createFile(files[i]["fileName"], files[i]["content"], files[i]["mimeType"])  
+    }
+   DriveApp.removeFile(saved_file)
+   md_folder.addFile(saved_file)
+  }
+  
 }
 
 function escapeHTML(text) {
@@ -127,7 +152,8 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters) {
       textElements.push(txt);
     } else if (t === DocumentApp.ElementType.INLINE_IMAGE) {
       result.images = result.images || [];
-      var contentType = element.getChild(i).getBlob().getContentType();
+      var blob = element.getChild(i).getBlob()
+      var contentType = blob.getContentType();
       var extension = "";
       if (/\/png$/.test(contentType)) {
         extension = ".png";
@@ -138,13 +164,19 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters) {
       } else {
         throw "Unsupported image type: "+contentType;
       }
+     
       var name = imagePrefix + imageCounter + extension;
+      blob.setName(name);
+      
       imageCounter++;
       textElements.push('![image alt text]('+name+')');
-      result.images.push( {
-        "bytes": element.getChild(i).getBlob().getBytes(), 
-        "type": contentType, 
-        "name": name});
+      //result.images.push( {
+      //  "bytes": blob.getBytes(), 
+      //  "type": contentType, 
+      //  "name": name});
+      
+      result.images.push({ "blob" : blob } )
+      
     } else if (t === DocumentApp.ElementType.PAGE_BREAK) {
       // ignore
     } else if (t === DocumentApp.ElementType.HORIZONTAL_RULE) {
@@ -287,3 +319,4 @@ function processTextElement(inSrc, txt) {
   }
   return pOut;
 }
+
