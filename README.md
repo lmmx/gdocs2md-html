@@ -1,12 +1,20 @@
 gdocs2Rmd
 ========
 
-A simple Google Apps script to convert a properly formatted Google Drive Document to the Rmarkdown (.Rmd) format. Fork of the gdoc2md repository — there've been many, and some collation of changes between them could be valuable.
+A simple Google Apps script to convert a properly formatted Google Drive Document to the Rmarkdown (.Rmd) format. Fork of the gdoc2md repository — there've been many (180 at time of writing!), and some collation of changes between them could be valuable.
+
+*NB* there's no code change from the markdown version yet. To consider:
+
+* Would this actually be best outputting md or Rmd format?
+* What value would code/YAML serve?
+   * programmatic access through Google Apps script to write YAML headers based on user input would be a nice way to make Rmarkdown more user-friendly, and perhaps help guide the construction of more elaborate custom knit setups (see post on modular workbooks, linked below).
 
 Related directions:
 
 * [One weird trick to compile multipartite dynamic documents with Rmarkdown](http://biochemistri.es/one-weird-rmd-trick)
 * [A modular Rmarkdown workbook](biochemistri.es/modular-workbook)
+* [devnotes: Custom application to open .gdoc extensions](https://github.com/lmmx/devnotes/wiki/Custom-application-to-open-.gdoc-extensions)
+* [devnotes: Google drive gdoc download conversion workaround](https://github.com/lmmx/devnotes/wiki/Google-drive-gdoc-download-conversion-workaround)
 
 ## Usage
 
