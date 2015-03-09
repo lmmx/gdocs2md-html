@@ -16,6 +16,10 @@ Related directions:
 * [devnotes: Custom application to open .gdoc extensions](https://github.com/lmmx/devnotes/wiki/Custom-application-to-open-.gdoc-extensions)
 * [devnotes: Google drive gdoc download conversion workaround](https://github.com/lmmx/devnotes/wiki/Google-drive-gdoc-download-conversion-workaround)
 
+## To-do list
+
+[See devnotes wiki page](https://github.com/lmmx/devnotes/wiki/gdocs2md-debugging:-repo-network,-round-2#to-do)
+
 ## Usage
 
   * Adding this script to your doc (once per doc):
