@@ -21,9 +21,10 @@ Related directions:
   * Adding this script to your doc (once per doc):
     * Open your Google Drive document (http://drive.google.com)
     * Tools -> Script Manager > New
-    * Select "Blank Project", then paste this code in and save.
+    * Select "Blank Project".
     * Clear the myFunction() default empty function and paste the contents of [converttomarkdown.gapps](https://raw.github.com/mangini/gdocs2md/master/converttomarkdown.gapps) into the code editor
-    * File -> Save
+    * File -> Save (or `Ctrl`/`⌘` + `S`)
+    * When prompted enter new project name for '*Untitled project*', e.g. '*gdocs2Rmd*'
     
   * Running the script (run as many times as you want):
     - Tools > Script Manager
