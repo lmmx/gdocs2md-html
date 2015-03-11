@@ -3,6 +3,7 @@ Parsing from mangini/gdocs2md.
 Modified by clearf to add files to the google directory structure. 
 
 Usage: 
+  NB: don't use on top-level doc (in root Drive folder) See comment in setupScript function.
   Adding this script to your doc: 
     - Tools > Script Manager > New
     - Select "Blank Project", then paste this code in and save.
@@ -16,8 +17,19 @@ Usage:
 
 function setupScript() {
   var scriptProperties = PropertiesService.getScriptProperties();
-  //  scriptProperties.setProperty("folder_id", "INSERT_FOLDER_ID_HERE");
-  //  scriptProperties.setProperty("document_id", "INSERT_FILE_ID_HERE");
+  
+  // manual way to do the following:
+  // scriptProperties.setProperty("folder_id", "INSERT_FOLDER_ID_HERE");
+  // scriptProperties.setProperty("document_id", "INSERT_FILE_ID_HERE");
+  
+  var doc_id = DocumentApp.getActiveDocument().getId();
+  scriptProperties.setProperty("document_id", doc_id);
+  var doc_parents = DriveApp.getFileById(doc_id).getParents();
+  if ( doc_parents == null ) {
+    var folder_id = null; // maybe this is right?
+  // TODO: check how to handle docs in root folder - would return null here but at least it's explicit
+  } else var folder_id = doc_parents[0];
+  scriptProperties.setProperty("folder_id", folder_id);
   scriptProperties.setProperty("image_folder_prefix", "/assets/images/");
 }
 
