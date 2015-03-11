@@ -9,7 +9,7 @@ Usage:
     - Select "Blank Project", then paste this code in and save.
   Running the script:
     - Tools > Script Manager
-    - Select "ConvertToMarkdown" function.
+    - Select "convertDocumentToMarkdown" function.
     - Click Run button.
     - Converted doc will be added to a "markdown" folder in the source document's directories. 
     - Images will be added to a subfolder of the "markdown" folder. 
@@ -54,10 +54,10 @@ function convertSingleDoc() {
     markdown_folder = source_folder.createFolder("Markdown")
   }
   
-  ConvertDocumentToMarkdown(DocumentApp.openById(document_id), markdown_folder);  
+  convertDocumentToMarkdown(DocumentApp.openById(document_id), markdown_folder);  
 }
 
-function ConvertFolder() {
+function convertFolder() {
   var scriptProperties = PropertiesService.getScriptProperties(); 
   var folder_id=scriptProperties.getProperty("folder_id");
   var source_folder = DriveApp.getFolderById(folder_id);
@@ -97,12 +97,12 @@ function ConvertFolder() {
     }  
     
     if (update_file) { 
-      ConvertDocumentToMarkdown(DocumentApp.openById(gdoc_file.getId()), markdown_folder);
+      convertDocumentToMarkdown(DocumentApp.openById(gdoc_file.getId()), markdown_folder);
     }
   }
 }
 
-function ConvertDocumentToMarkdown(document, destination_folder) {
+function convertDocumentToMarkdown(document, destination_folder) {
   var scriptProperties = PropertiesService.getScriptProperties(); 
   var image_prefix=scriptProperties.getProperty("image_folder_prefix");
   var numChildren = document.getActiveSection().getNumChildren();
