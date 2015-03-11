@@ -28,7 +28,13 @@ function setupScript() {
   if ( doc_parents == null ) {
     var folder_id = null; // maybe this is right?
   // TODO: check how to handle docs in root folder - would return null here but at least it's explicit
-  } else var folder_id = doc_parents[0];
+  } else {
+    var folders = doc_parents;
+    while (folders.hasNext()) {
+      var folder = folders.next();
+      var folder_id = folder.getId();
+    }
+  }
   scriptProperties.setProperty("folder_id", folder_id);
   scriptProperties.setProperty("image_folder_prefix", "/assets/images/");
 }
