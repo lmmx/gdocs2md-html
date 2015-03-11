@@ -15,13 +15,17 @@ Usage:
 */
 
 function setupScript() {
-  var scriptProperties = PropertiesService.getScriptProperties(); 
-  scriptProperties.setProperty("folder_id", "0B_S2F7wRovC4X2hralB6S3gtRmM");
+  var scriptProperties = PropertiesService.getScriptProperties();
+  //  scriptProperties.setProperty("folder_id", "INSERT_FOLDER_ID_HERE");
+  //  scriptProperties.setProperty("document_id", "INSERT_FILE_ID_HERE");
   scriptProperties.setProperty("image_folder_prefix", "/assets/images/");
 }
 
 function convertSingleDoc() {
-  var source_folder = DriveApp.getFolderById("0B_S2F7wRovC4X2hralB6S3gtRmM")
+  var scriptProperties = PropertiesService.getScriptProperties();
+  var folder_id=scriptProperties.getProperty("folder_id");
+  var document_id=scriptProperties.getProperty("document_id");
+  var source_folder = DriveApp.getFolderById(folder_id);
   var markdown_folders = source_folder.getFoldersByName("Markdown");
 
    var markdown_folder; 
@@ -32,13 +36,13 @@ function convertSingleDoc() {
     markdown_folder = source_folder.createFolder("Markdown")
   }
   
-  ConvertDocumentToMarkdown(DocumentApp.openById("174SK_cupVeaAUIfBZqkFukVj0vTXIUjogu8Acu8kC8M"), markdown_folder);  
+  ConvertDocumentToMarkdown(DocumentApp.openById(document_id), markdown_folder);  
 }
 
 function ConvertFolder() {
   var scriptProperties = PropertiesService.getScriptProperties(); 
   var folder_id=scriptProperties.getProperty("folder_id");
-  var source_folder = DriveApp.getFolderById(folder_id)
+  var source_folder = DriveApp.getFolderById(folder_id);
   var markdown_folders = source_folder.getFoldersByName("Markdown");
   
   
@@ -47,7 +51,7 @@ function ConvertFolder() {
     markdown_folder = markdown_folders.next();
   } else { 
     // Create a markdown folder if it doesn't exist.
-    markdown_folder = source_folder.createFolder("Markdown")
+    markdown_folder = source_folder.createFolder("Markdown");
   }
   
   // Only try to convert google docs files.  
@@ -563,4 +567,3 @@ function processTextElement(inSrc, txt) {
   mOut = pOut.substring(0, off) + mOut;    
   return mOut;
 }
-
