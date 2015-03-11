@@ -1,7 +1,7 @@
 gdocs2Rmd
 ========
 
-A simple Google Apps script to convert a properly formatted Google Drive Document to the Rmarkdown (.Rmd) format. Fork of the gdoc2md repository — there've been many (180 at time of writing!), and some collation of changes between them could be valuable.
+A simple Google Apps script to convert a properly formatted Google Drive Document to the Rmarkdown (.Rmd) format. Fork of the gdocs2md repository — there've been many (180 at time of writing!), and some collation of changes between them could be valuable.
 
 *NB* there's no code change from the markdown version yet. To consider:
 
