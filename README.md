@@ -18,7 +18,7 @@ Related directions:
 
 ## To-do list
 
-[See devnotes wiki page](https://github.com/lmmx/devnotes/wiki/gdocs2md-debugging:-repo-network,-round-2#to-do)
+[See the rOpenSci wishlist page](https://github.com/ropensci/wishlist/wiki/Google-Docs-as-Rmarkdown-writing-GUI#to-do)
 
 ## Usage
 
