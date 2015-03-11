@@ -11,8 +11,8 @@ Usage:
     - Tools > Script Manager
     - Select "convertDocumentToMarkdown" function.
     - Click Run button.
-    - Converted doc will be added to a "markdown" folder in the source document's directories. 
-    - Images will be added to a subfolder of the "markdown" folder. 
+    - Converted doc will be added to a "Markdown" folder in the source document's directories. 
+    - Images will be added to a subfolder of the "Markdown" folder. 
 */
 
 function setupScript() {
