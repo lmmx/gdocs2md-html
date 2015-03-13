@@ -1,5 +1,5 @@
 /*
-Parsing from mangini/gdocs2md.
+Parsing from lmmx/gdocs2Rmd.
 Modified by clearf to add files to the google directory structure. 
 
 Usage: 
@@ -80,15 +80,15 @@ function convertFolder() {
     var gdoc_file = gdoc_files.next()
 
     var filename = gdoc_file.getName();    
-    var md_files = markdown_folder.getFilesByName(filename + ".md");
+    var Rmd_files = markdown_folder.getFilesByName(filename + ".Rmd");
     var update_file = false
     
-    if (md_files.hasNext()) {
-      var md_file = md_files.next();
+    if (Rmd_files.hasNext()) {
+      var Rmd_file = Rmd_files.next();
       
-      if (md_files.hasNext()){ // There are multiple markdown files; delete and rerun
+      if (Rmd_files.hasNext()){ // There are multiple markdown files; delete and rerun
         update_file = true;
-      } else if (md_file.getLastUpdated() < gdoc_file.getLastUpdated()) { 
+      } else if (Rmd_file.getLastUpdated() < gdoc_file.getLastUpdated()) { 
         update_file = true; 
       }
     } else {
@@ -107,7 +107,7 @@ function convertDocumentToMarkdown(document, destination_folder) {
   var image_prefix=scriptProperties.getProperty("image_folder_prefix");
   var numChildren = document.getActiveSection().getNumChildren();
   var text = "";
-  var md_filename = document.getName()+".md";
+  var Rmd_filename = document.getName()+".Rmd";
   var image_foldername = document.getName()+"_images";
   var inSrc = false;
   var inClass = false;
@@ -163,7 +163,7 @@ function convertDocumentToMarkdown(document, destination_folder) {
     }
       
   }
-  files.push({"fileName": md_filename, "mimeType": "text/plain", "content": text});
+  files.push({"fileName": Rmd_filename, "mimeType": "text/plain", "content": text});
     
   
   // Cleanup any old folders and files in our destination directory with an identical name
@@ -174,7 +174,7 @@ function convertDocumentToMarkdown(document, destination_folder) {
   }  
   
   // Remove any previously converted markdown files.
-  var old_files = destination_folder.getFilesByName(md_filename)
+  var old_files = destination_folder.getFilesByName(Rmd_filename)
   while (old_files.hasNext()) {
     var old_file = old_files.next();
     old_file.setTrashed(true)
