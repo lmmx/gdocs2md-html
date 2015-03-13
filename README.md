@@ -1,33 +1,25 @@
-gdocs2Rmd
-========
+gdocs2md-html
+=============
 
-A simple Google Apps script to convert a properly formatted Google Drive Document to the Rmarkdown (.Rmd) format. Fork of the gdocs2md repository — there've been many (180 at time of writing!), and some collation of changes between them could be valuable.
+A simple Google Apps script to convert a properly formatted Google Drive Document to the markdown (.md) format. Fork of the gdocs2md repository — there've been many (180 at time of writing!), and some collation of changes between them could be valuable.
 
-*NB* there's no code change from the markdown version yet. To consider:
+Related:
 
-* Would this actually be best outputting md or Rmd format?
-* What value would code/YAML serve?
-   * programmatic access through Google Apps script to write YAML headers based on user input would be a nice way to make Rmarkdown more user-friendly, and perhaps help guide the construction of more elaborate custom knit setups (see post on modular workbooks, linked below).
-
-Related directions:
-
-* [One weird trick to compile multipartite dynamic documents with Rmarkdown](http://biochemistri.es/one-weird-rmd-trick)
-* [A modular Rmarkdown workbook](biochemistri.es/modular-workbook)
 * [devnotes: Custom application to open .gdoc extensions](https://github.com/lmmx/devnotes/wiki/Custom-application-to-open-.gdoc-extensions)
 * [devnotes: Google drive gdoc download conversion workaround](https://github.com/lmmx/devnotes/wiki/Google-drive-gdoc-download-conversion-workaround)
 
 ## To-do list
 
-[See the rOpenSci wishlist page](https://github.com/ropensci/wishlist/wiki/Google-Docs-as-Rmarkdown-writing-GUI#to-do)
+[x] Fork (technically [didn't fork](http://kroltech.com/2014/01/quick-tip-how-to-fork-your-own-repo-in-github/)) and go back to markdown for HTML usage
 
 ## Usage
 
   * Adding this script to your doc (once per doc):
     * Open your Google Drive document (http://drive.google.com)
     * Tools -> Script Editor > Create script for blank project
-    * Clear the default Code.gs file and paste the contents of [exportRmd.gs](https://raw.githubusercontent.com/lmmx/gdocs2Rmd/master/exportRmd.gs) into the code editor
+    * Clear the default Code.gs file and paste the contents of [exportmd.gs](https://raw.githubusercontent.com/lmmx/gdocs2md-html/master/exportmd.gs) into the code editor
     * File -> Save (or `Ctrl`/`⌘` + `S`)
-    * When prompted enter new project name for '*Untitled project*', e.g. '*gdocs2Rmd*'
+    * When prompted enter new project name for '*Untitled project*', e.g. '*gdocs2md*'
     
   * Running the script:
     - Select `setupScript` from the script editor's dropdown menu and the play symbol button (on the left of the dropdown) to run it
@@ -65,7 +57,7 @@ Related directions:
 * Renato Mangini - [G+](//google.com/+renatomangini) - [Github](//github.com/mangini)
 * Ed Bacher - [G+](//plus.google.com/106923847899206957842) - [Github](//github.com/evbacher)
 * Chris Clearfield - [Github](https://github.com/clearf)
-* Louis Maddox - [G+](https://plus.google.com/u/0/+LouisMaddox) - [GitHub](https://github.com/lmmx) *forked to Rmd repo March 2015*
+* Louis Maddox - [G+](https://plus.google.com/u/0/+LouisMaddox) - [GitHub](https://github.com/lmmx)
 
 ## LICENSE
 
