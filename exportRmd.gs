@@ -9,10 +9,10 @@ Usage:
     - Select "Blank Project", then paste this code in and save.
   Running the script:
     - Tools > Script Manager
-    - Select "convertDocumentToMarkdown" function.
+    - Select "convertDocumentToRmarkdown" function.
     - Click Run button.
-    - Converted doc will be added to a "Markdown" folder in the source document's directories. 
-    - Images will be added to a subfolder of the "Markdown" folder. 
+    - Converted doc will be added to a "Rmarkdown" folder in the source document's directories. 
+    - Images will be added to a subfolder of the "Rmarkdown" folder. 
 */
 
 function setupScript() {
@@ -44,32 +44,32 @@ function convertSingleDoc() {
   var folder_id=scriptProperties.getProperty("folder_id");
   var document_id=scriptProperties.getProperty("document_id");
   var source_folder = DriveApp.getFolderById(folder_id);
-  var markdown_folders = source_folder.getFoldersByName("Markdown");
+  var Rmarkdown_folders = source_folder.getFoldersByName("Rmarkdown");
 
-   var markdown_folder; 
-  if (markdown_folders.hasNext()) { 
-    markdown_folder = markdown_folders.next();
+   var Rmarkdown_folder; 
+  if (Rmarkdown_folders.hasNext()) { 
+    Rmarkdown_folder = Rmarkdown_folders.next();
   } else { 
-    // Create a markdown folder if it doesn't exist.
-    markdown_folder = source_folder.createFolder("Markdown")
+    // Create a Rmarkdown folder if it doesn't exist.
+    Rmarkdown_folder = source_folder.createFolder("Rmarkdown")
   }
   
-  convertDocumentToMarkdown(DocumentApp.openById(document_id), markdown_folder);  
+  convertDocumentToRmarkdown(DocumentApp.openById(document_id), Rmarkdown_folder);  
 }
 
 function convertFolder() {
   var scriptProperties = PropertiesService.getScriptProperties(); 
   var folder_id=scriptProperties.getProperty("folder_id");
   var source_folder = DriveApp.getFolderById(folder_id);
-  var markdown_folders = source_folder.getFoldersByName("Markdown");
+  var Rmarkdown_folders = source_folder.getFoldersByName("Rmarkdown");
   
   
-  var markdown_folder; 
-  if (markdown_folders.hasNext()) { 
-    markdown_folder = markdown_folders.next();
+  var Rmarkdown_folder; 
+  if (Rmarkdown_folders.hasNext()) { 
+    Rmarkdown_folder = Rmarkdown_folders.next();
   } else { 
-    // Create a markdown folder if it doesn't exist.
-    markdown_folder = source_folder.createFolder("Markdown");
+    // Create a Rmarkdown folder if it doesn't exist.
+    Rmarkdown_folder = source_folder.createFolder("Rmarkdown");
   }
   
   // Only try to convert google docs files.  
@@ -80,13 +80,13 @@ function convertFolder() {
     var gdoc_file = gdoc_files.next()
 
     var filename = gdoc_file.getName();    
-    var Rmd_files = markdown_folder.getFilesByName(filename + ".Rmd");
+    var Rmd_files = Rmarkdown_folder.getFilesByName(filename + ".Rmd");
     var update_file = false
     
     if (Rmd_files.hasNext()) {
       var Rmd_file = Rmd_files.next();
       
-      if (Rmd_files.hasNext()){ // There are multiple markdown files; delete and rerun
+      if (Rmd_files.hasNext()){ // There are multiple Rmarkdown files; delete and rerun
         update_file = true;
       } else if (Rmd_file.getLastUpdated() < gdoc_file.getLastUpdated()) { 
         update_file = true; 
@@ -97,12 +97,12 @@ function convertFolder() {
     }  
     
     if (update_file) { 
-      convertDocumentToMarkdown(DocumentApp.openById(gdoc_file.getId()), markdown_folder);
+      convertDocumentToRmarkdown(DocumentApp.openById(gdoc_file.getId()), Rmarkdown_folder);
     }
   }
 }
 
-function convertDocumentToMarkdown(document, destination_folder) {
+function convertDocumentToRmarkdown(document, destination_folder) {
   var scriptProperties = PropertiesService.getScriptProperties(); 
   var image_prefix=scriptProperties.getProperty("image_folder_prefix");
   var numChildren = document.getActiveSection().getNumChildren();
@@ -173,7 +173,7 @@ function convertDocumentToMarkdown(document, destination_folder) {
     old_folder.setTrashed(true)
   }  
   
-  // Remove any previously converted markdown files.
+  // Remove any previously converted Rmarkdown files.
   var old_files = destination_folder.getFilesByName(Rmd_filename)
   while (old_files.hasNext()) {
     var old_file = old_files.next();
@@ -195,7 +195,7 @@ function convertDocumentToMarkdown(document, destination_folder) {
       // The images go into a subfolder matching the post title
       image_folder.addFile(saved_file)
     } else { 
-      // The markdown files all go in the "Markdown" directory
+      // The Rmarkdown files all go in the "Rmarkdown" directory
       saved_file = DriveApp.createFile(files[i]["fileName"], files[i]["content"], files[i]["mimeType"])  
       destination_folder.addFile(saved_file)
     }
@@ -226,7 +226,7 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
   var imagePrefix = "image_";
   
   // Handle Table elements. Pretty simple-minded now, but works for simple tables.
-  // Note that Markdown does not process within block-level HTML, so it probably 
+  // Note that Rmarkdown does not process within block-level HTML, so it probably 
   // doesn't make sense to add markup within tables.
   if (element.getType() === DocumentApp.ElementType.TABLE) {
     textElements.push("<table>\n");
@@ -467,7 +467,7 @@ function processTextElement(inSrc, txt) {
   pOut = reformatted_txt.getText(); 
   
   
-  // Markdown is farily picky about how it will let you intersperse spaces around words and strong/italics chars. This regex (hopefully) clears this up
+  // Rmarkdown is farily picky about how it will let you intersperse spaces around words and strong/italics chars. This regex (hopefully) clears this up
   // Match any number of \*, followed by spaces/workd boundaries against anything that is not the \*, followed by boundaries, spaces and * again. 
   // Test case at http://jsfiddle.net/ovqLv0s9/2/
 
