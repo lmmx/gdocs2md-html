@@ -140,10 +140,10 @@ function convertDocumentToRmarkdown(document, destination_folder) {
         text+="</pre>\n\n";
       } else if (result.inClass==="start" && !inClass) {
         inClass=true;
-        text+="<div class=\""+result.className+"\">\n";
+        text+="<pre class=\""+result.className+"\">\n";
       } else if (result.inClass==="end" && inClass) {
         inClass=false;
-        text+="</div>\n\n";
+        text+="</pre>\n\n";
       } else if (inClass) {
         text+=result.text+"\n\n";
       } else if (inSrc) {
