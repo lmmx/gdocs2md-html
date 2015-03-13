@@ -65,7 +65,7 @@ Related directions:
 * Renato Mangini - [G+](//google.com/+renatomangini) - [Github](//github.com/mangini)
 * Ed Bacher - [G+](//plus.google.com/106923847899206957842) - [Github](//github.com/evbacher)
 * Chris Clearfield - [Github](https://github.com/clearf)
-* Louis Maddox - [G+](https://plus.google.com/u/0/+LouisMaddox) (forked to Rmd repo)
+* Louis Maddox - [G+](https://plus.google.com/u/0/+LouisMaddox) - [GitHub](https://github.com/lmmx) *forked to Rmd repo March 2015*
 
 ## LICENSE
 
