@@ -24,18 +24,18 @@ Related directions:
 
   * Adding this script to your doc (once per doc):
     * Open your Google Drive document (http://drive.google.com)
-    * Tools -> Script Manager > New
-    * Select "Blank Project".
-    * Clear the myFunction() default empty function and paste the contents of [converttomarkdown.gapps](https://raw.github.com/mangini/gdocs2md/master/converttomarkdown.gapps) into the code editor
+    * Tools -> Script Editor > Create script for blank project
+    * Clear the default Code.gs file and paste the contents of [exportRmd.gs](https://raw.githubusercontent.com/lmmx/gdocs2Rmd/master/exportRmd.gs) into the code editor
     * File -> Save (or `Ctrl`/`⌘` + `S`)
     * When prompted enter new project name for '*Untitled project*', e.g. '*gdocs2Rmd*'
     
-  * Running the script (run as many times as you want):
-    - Tools > Script Manager
-    - Select "ConvertToMarkdown" function.
-    - Click Run button (First run will require you to authorize it. Authorize and run again)
-    - Converted doc with images attached will be emailed to you. Subject will be "[MARKDOWN_MAKER]...".
+  * Running the script:
+    - Select `setupScript` from the script editor's dropdown menu and the play symbol button (on the left of the dropdown) to run it
+    - Likewise for the `convertSingleDoc` function, or for batch processing on a folder use the `convertFolder` function.
+    - The first run will require you to authorize the app.
+    - Converted doc will be saved in the Markdown sub-directory, images below that (`/assets/images`).
 
+*NB* don't use on a top-level document (that is, in the root Drive folder). See my comment in the setupScript function.
 
 ## Interpreted formats
   * Text:
@@ -64,6 +64,8 @@ Related directions:
 
 * Renato Mangini - [G+](//google.com/+renatomangini) - [Github](//github.com/mangini)
 * Ed Bacher - [G+](//plus.google.com/106923847899206957842) - [Github](//github.com/evbacher)
+* Chris Clearfield - [Github](https://github.com/clearf)
+* Louis Maddox - [G+](https://plus.google.com/u/0/+LouisMaddox) (forked to Rmd repo)
 
 ## LICENSE
 
