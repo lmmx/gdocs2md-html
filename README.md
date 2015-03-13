@@ -10,7 +10,7 @@ Related:
 
 ## To-do list
 
-[x] Fork (technically [didn't fork](http://kroltech.com/2014/01/quick-tip-how-to-fork-your-own-repo-in-github/)) and go back to markdown for HTML usage
+- [x] Fork (technically [didn't fork](http://kroltech.com/2014/01/quick-tip-how-to-fork-your-own-repo-in-github/)) and go back to markdown for HTML usage
 
 ## Usage
 
