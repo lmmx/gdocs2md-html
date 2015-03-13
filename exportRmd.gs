@@ -1,6 +1,7 @@
 /*
-Parsing from lmmx/gdocs2Rmd.
+Parsing from mangini/gdocs2md.
 Modified by clearf to add files to the google directory structure. 
+Modified by lmmx to write Rmarkdown, with emphasis on chunks rather than HTML-rendering code.
 
 Usage: 
   NB: don't use on top-level doc (in root Drive folder) See comment in setupScript function.
