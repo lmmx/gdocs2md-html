@@ -50,7 +50,7 @@ Related directions:
     * images are correctly extracted and sent as attachments
   * Blocks:
     * Table of contents is replaced by `[[TOC]]`
-    * blocks of text delimited by "--- class whateverclassnameyouwant" and "---" are converted to `<div class="whateverclassnameyouwant"></div>` 
+    * blocks of text delimited by "--- class whateverclassnameyouwant" and "---" are converted to `<pre class="whateverclassnameyouwant"></pre>` 
     * Source code: 
       * **UPDATED**: blocks of text delimited by "--- source code" or "--- src" and "---" are converted to `<pre></pre>`
       * **NEW**: blocks of text delimited by "--- source pretty" or "--- srcp" and "---" are converted to `<pre class="prettyprint"></pre>`
