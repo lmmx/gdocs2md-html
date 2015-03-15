@@ -1,18 +1,19 @@
 /*
 Parsing from mangini/gdocs2md.
 Modified by clearf to add files to the google directory structure. 
-Modified by lmmx to write Rmarkdown, with emphasis on chunks rather than HTML-rendering code.
+Modified by lmmx to write Markdown, going back to HTML-incorporation.
 
 Usage: 
+  NB: don't use on top-level doc (in root Drive folder) See comment in setupScript function.
   Adding this script to your doc: 
     - Tools > Script Manager > New
     - Select "Blank Project", then paste this code in and save.
   Running the script:
     - Tools > Script Manager
-    - Select "convertDocumentToRmarkdown" function.
+    - Select "convertDocumentToMarkdown" function.
     - Click Run button.
-    - Converted doc will be added to a "Rmarkdown" folder in the source document's directories. 
-    - Images will be added to a subfolder of the "Rmarkdown" folder. 
+    - Converted doc will be added to a "Markdown" folder in the source document's directories. 
+    - Images will be added to a subfolder of the "Markdown" folder. 
 */
 
 function onInstall(e) {
@@ -24,9 +25,9 @@ function onOpen() {
   setupScript();
 // In future:
 //  DocumentApp.getUi().createAddonMenu();
-  DocumentApp.getUi().createMenu('Rmarkdown')
-      .addItem('Export \u2192 Rmd', 'convertSingleDoc')
-      .addItem('Export folder \u2192 Rmd', 'convertFolder')
+  DocumentApp.getUi().createMenu('Markdown')
+      .addItem('Export \u2192 markdown', 'convertSingleDoc')
+      .addItem('Export folder \u2192 markdown', 'convertFolder')
       .addItem('Customise markdown conversion', 'changeDefaults')
       .addToUi();
 }
@@ -144,32 +145,32 @@ function convertSingleDoc() {
   var folder_id = scriptProperties.getProperty("folder_id");
   var document_id = scriptProperties.getProperty("document_id");
   var source_folder = DriveApp.getFolderById(folder_id);
-  var Rmarkdown_folders = source_folder.getFoldersByName("Rmarkdown");
+  var markdown_folders = source_folder.getFoldersByName("Markdown");
 
-  var Rmarkdown_folder; 
-  if (Rmarkdown_folders.hasNext()) { 
-    Rmarkdown_folder = Rmarkdown_folders.next();
+  var markdown_folder; 
+  if (markdown_folders.hasNext()) { 
+    markdown_folder = markdown_folders.next();
   } else { 
-    // Create a Rmarkdown folder if it doesn't exist.
-    Rmarkdown_folder = source_folder.createFolder("Rmarkdown")
+    // Create a Markdown folder if it doesn't exist.
+    markdown_folder = source_folder.createFolder("Markdown")
   }
   
-  convertDocumentToRmarkdown(DocumentApp.openById(document_id), Rmarkdown_folder);  
+  convertDocumentToMarkdown(DocumentApp.openById(document_id), markdown_folder);  
 }
 
 function convertFolder() {
   var scriptProperties = PropertiesService.getScriptProperties(); 
   var folder_id = scriptProperties.getProperty("folder_id");
   var source_folder = DriveApp.getFolderById(folder_id);
-  var Rmarkdown_folders = source_folder.getFoldersByName("Rmarkdown");
+  var markdown_folders = source_folder.getFoldersByName("Markdown");
   
   
-  var Rmarkdown_folder; 
-  if (Rmarkdown_folders.hasNext()) { 
-    Rmarkdown_folder = Rmarkdown_folders.next();
+  var markdown_folder; 
+  if (markdown_folders.hasNext()) { 
+    markdown_folder = markdown_folders.next();
   } else { 
-    // Create a Rmarkdown folder if it doesn't exist.
-    Rmarkdown_folder = source_folder.createFolder("Rmarkdown");
+    // Create a Markdown folder if it doesn't exist.
+    markdown_folder = source_folder.createFolder("Markdown");
   }
   
   // Only try to convert google docs files.  
@@ -180,13 +181,13 @@ function convertFolder() {
     var gdoc_file = gdoc_files.next()
 
     var filename = gdoc_file.getName();    
-    var Rmd_files = Rmarkdown_folder.getFilesByName(filename + ".Rmd");
-    var update_file = false
+    var Rmd_files = markdown_folder.getFilesByName(filename + ".Rmd");
+    var update_file = false;
     
     if (Rmd_files.hasNext()) {
       var Rmd_file = Rmd_files.next();
       
-      if (Rmd_files.hasNext()){ // There are multiple Rmarkdown files; delete and rerun
+      if (Rmd_files.hasNext()){ // There are multiple markdown files; delete and rerun
         update_file = true;
       } else if (Rmd_file.getLastUpdated() < gdoc_file.getLastUpdated()) { 
         update_file = true; 
@@ -197,12 +198,12 @@ function convertFolder() {
     }  
     
     if (update_file) { 
-      convertDocumentToRmarkdown(DocumentApp.openById(gdoc_file.getId()), Rmarkdown_folder);
+      convertDocumentToMarkdown(DocumentApp.openById(gdoc_file.getId()), markdown_folder);
     }
   }
 }
 
-function convertDocumentToRmarkdown(document, destination_folder) {
+function convertDocumentToMarkdown(document, destination_folder) {
   var scriptProperties = PropertiesService.getScriptProperties(); 
   var image_prefix = scriptProperties.getProperty("image_folder_prefix");
   var numChildren = document.getActiveSection().getNumChildren();
@@ -210,7 +211,7 @@ function convertDocumentToRmarkdown(document, destination_folder) {
   var Rmd_filename = document.getName()+".Rmd";
   var image_foldername = document.getName()+"_images";
   var inSrc = false;
-  var inChunk = false;
+  var inClass = false;
   var globalImageCounter = 0;
   var globalListCounters = {};
   // edbacher: added a variable for indent in src <pre> block. Let style sheet do margin.
@@ -223,7 +224,7 @@ function convertDocumentToRmarkdown(document, destination_folder) {
   // Walk through all the child elements of the doc.
   for (var i = 0; i < numChildren; i++) {
     var child = document.getActiveSection().getChild(i);
-    var result = processParagraph(i, child, inSrc, inChunk, globalImageCounter, globalListCounters, image_prefix + image_foldername);
+    var result = processParagraph(i, child, inSrc, globalImageCounter, globalListCounters, image_prefix + image_foldername);
     globalImageCounter += (result && result.images) ? result.images.length : 0;
     if (result!==null) {
       if (result.sourcePretty==="start" && !inSrc) {
@@ -238,18 +239,14 @@ function convertDocumentToRmarkdown(document, destination_folder) {
       } else if (result.source==="end" && inSrc) {
         inSrc=false;
         text+="</pre>\n\n";
-      } else if (result.inChunk==="start" && !inChunk) {
-        inChunk=true;
-        if (result.className==='') {
-          text+="```{r}\n";
-        } else {
-          text+="```{r "+result.className+"}\n";
-        }
-      } else if (result.inChunk==="end" && inChunk) {
-        inChunk=false;
-        text+="```\n\n";
-      } else if (inChunk) {
-        text+=result.text+"\n";
+      } else if (result.inClass==="start" && !inClass) {
+        inClass=true;
+        text+="<pre class=\""+result.className+"\">\n";
+      } else if (result.inClass==="end" && inClass) {
+        inClass=false;
+        text+="</pre>\n\n";
+      } else if (inClass) {
+        text+=result.text+"\n\n";
       } else if (inSrc) {
         text+=(srcIndent+escapeHTML(result.text)+"\n");
       } else if (result.text && result.text.length>0) {
@@ -277,7 +274,7 @@ function convertDocumentToRmarkdown(document, destination_folder) {
     old_folder.setTrashed(true)
   }  
   
-  // Remove any previously converted Rmarkdown files.
+  // Remove any previously converted markdown files.
   var old_files = destination_folder.getFilesByName(Rmd_filename)
   while (old_files.hasNext()) {
     var old_file = old_files.next();
@@ -299,7 +296,7 @@ function convertDocumentToRmarkdown(document, destination_folder) {
       // The images go into a subfolder matching the post title
       image_folder.addFile(saved_file)
     } else { 
-      // The Rmarkdown files all go in the "Rmarkdown" directory
+      // The markdown files all go in the "Markdown" directory
       saved_file = DriveApp.createFile(files[i]["fileName"], files[i]["content"], files[i]["mimeType"])  
       destination_folder.addFile(saved_file)
     }
@@ -317,7 +314,7 @@ function standardQMarks(text) {
 }
 
 // Process each child element (not just paragraphs).
-function processParagraph(index, element, inSrc, inChunk, imageCounter, listCounters, image_path) {
+function processParagraph(index, element, inSrc, imageCounter, listCounters, image_path) {
   // First, check for things that require no processing.
   if (element.getNumChildren()==0) {
     return null;
@@ -334,7 +331,7 @@ function processParagraph(index, element, inSrc, inChunk, imageCounter, listCoun
   var imagePrefix = "image_";
   
   // Handle Table elements. Pretty simple-minded now, but works for simple tables.
-  // Note that Rmarkdown does not process within block-level HTML, so it probably 
+  // Note that Markdown does not process within block-level HTML, so it probably 
   // doesn't make sense to add markup within tables.
   if (element.getType() === DocumentApp.ElementType.TABLE) {
     textElements.push("<table>\n");
@@ -357,7 +354,7 @@ function processParagraph(index, element, inSrc, inChunk, imageCounter, listCoun
     if (t === DocumentApp.ElementType.TABLE_ROW) {
       // do nothing: already handled TABLE_ROW
     } else if (t === DocumentApp.ElementType.TEXT) {
-      var txt = element.getChild(i);
+      var txt  = element.getChild(i);
       pOut += txt.getText();
       textElements.push(txt);
     } else if (t === DocumentApp.ElementType.INLINE_IMAGE) {
@@ -410,14 +407,13 @@ function processParagraph(index, element, inSrc, inChunk, imageCounter, listCoun
     result.sourcePretty = "start";
   } else if (/^\s*---\s+src\s*$/.test(pOut) || /^\s*---\s+source code\s*$/.test(pOut)) {
     result.source = "start";
-  } else if (/^\s*~~~\s*$/.test(pOut) && typeof(inChunk) !== 'undefined' && inChunk) {
-    result.inChunk = "end";
-  } else if (/^\s*~~~\s*(.*)\s*$/.test(pOut)) {
-    result.inChunk = "start";
-    result.className = standardQMarks(RegExp.$1);
+  } else if (/^\s*---\s+class\s+([^ ]+)\s*$/.test(pOut)) {
+    result.inClass = "start";
+    result.className = RegExp.$1;
   } else if (/^\s*---\s*$/.test(pOut)) {
     result.source = "end";
     result.sourcePretty = "end";
+    result.inClass = "end";
   } else if (/^\s*---\s+jsperf\s*([^ ]+)\s*$/.test(pOut)) {
     result.text = '<iframe style="width: 100%; height: 340px; overflow: hidden; border: 0;" '+
                   'src="http://www.html5rocks.com/static/jsperfview/embed.html?id='+RegExp.$1+
@@ -509,82 +505,82 @@ function processTextElement(inSrc, txt) {
   // FONTs
   var lastOff = pOut.length;
   for (var i=attrs.length-1; i>=0; i--) {
-    var off = attrs[i];
-    var font = txt.getFontFamily(off)
+    var off=attrs[i];
+    var font=txt.getFontFamily(off)
      if (font) {
        while (i>=1 && txt.getFontFamily(attrs[i-1])==font) {
-        // detect fonts that are in multiple pieces because of errors on formatting:
-        i-=1;
-        off = attrs[i];
+          // detect fonts that are in multiple pieces because of errors on formatting:
+          i-=1;
+          off=attrs[i];
        }
        reformatted_txt.setFontFamily(off, lastOff-1, font); 
      }
-    lastOff = off;  
+    lastOff=off;  
   }
   
   // URL
   // XXX TODO actually convert to URL text here. 
-  var lastOff = pOut.length;
+  var lastOff=pOut.length;
   for (var i=attrs.length-1; i>=0; i--) {
-    var off = attrs[i];
-    var url = txt.getLinkUrl(off);
+    var off=attrs[i];
+    var url=txt.getLinkUrl(off);
      if (url) {
        while (i>=1 && txt.getLinkUrl(attrs[i-1]) == url) {
           // detect urls that are in multiple pieces because of errors on formatting:
           i-=1;
-          off = attrs[i];
+          off=attrs[i];
        }
      reformatted_txt.setLinkUrl(off, lastOff-1, url); 
      }
-    lastOff = off;  
+    lastOff=off;  
   }  
   
    // bold
-  var lastOff = pOut.length;
+  var lastOff=pOut.length;
   for (var i=attrs.length-1; i>=0; i--) {
-    var off = attrs[i];
-    var bold = txt.isBold(off);
+    var off=attrs[i];
+    var bold=txt.isBold(off);
      if (bold) {
        while (i>=1 && txt.isBold(attrs[i-1])) {
           i-=1;
-          off = attrs[i];
+          off=attrs[i];
        }
      reformatted_txt.setBold(off, lastOff-1, bold); 
      }
-    lastOff = off;  
+    lastOff=off;  
   }
   
   // italics
-  var lastOff = pOut.length;
+  var lastOff=pOut.length;
   for (var i=attrs.length-1; i>=0; i--) {
-    var off = attrs[i];
-    var italic = txt.isItalic(off);
+    var off=attrs[i];
+    var italic=txt.isItalic(off);
      if (italic) {
        while (i>=1 && txt.isItalic(attrs[i-1])) {
           i-=1;
-          off = attrs[i];
+          off=attrs[i];
        }
      reformatted_txt.setItalic(off, lastOff-1, italic); 
      }
-    lastOff = off;  
+    lastOff=off;  
   }
   
   
-  var mOut = ""; // Modified out string
+  var mOut=""; // Modified out string
   var harmonized_attrs = reformatted_txt.getTextAttributeIndices();
   reformatted_txt.getTextAttributeIndices();
   pOut = reformatted_txt.getText(); 
   
   
-  // Rmarkdown is farily picky about how it will let you intersperse spaces around words and strong/italics chars. This regex (hopefully) clears this up
+  // Markdown is farily picky about how it will let you intersperse spaces around words and strong/italics chars. This regex (hopefully) clears this up
   // Match any number of \*, followed by spaces/workd boundaries against anything that is not the \*, followed by boundaries, spaces and * again. 
   // Test case at http://jsfiddle.net/ovqLv0s9/2/
 
   var reAlignStars = /(\*+)(\s*\b)([^\*]+)(\b\s*)(\*+)/g;
   
-  var lastOff = pOut.length;
+  var lastOff=pOut.length;
   for (var i=harmonized_attrs.length-1; i>=0; i--) {
-    var off = harmonized_attrs[i];
+    var off=harmonized_attrs[i];
     
     var raw_text = pOut.substring(off, lastOff) 
  
@@ -616,14 +612,14 @@ function processTextElement(inSrc, txt) {
       end_font = reformatted_txt.getFontFamily(lastOff -1 )
       if (end_font) {
         if (!inSrc && end_font===end_font.COURIER_NEW && reformatted_txt.getFontFamily(lastOff) != end_font) {
-          mark_code = true;
+          mark_code=true;
         }
       }
       if (reformatted_txt.isBold(lastOff - 1) && !reformatted_txt.isBold(lastOff) ) { 
-        mark_bold = true;
+        mark_bold=true;
       }
       if (reformatted_txt.isItalic(lastOff - 1) && !reformatted_txt.isItalic(lastOff)) {
-        mark_italic = true; 
+        mark_italic=true; 
       }
     }
     
@@ -640,7 +636,7 @@ function processTextElement(inSrc, txt) {
     mark_bold = mark_italic =  mark_code = false; 
     
     var font=reformatted_txt.getFontFamily(off);
-    if (off == 0) {   
+   if (off == 0) {   
       if (font) {
         if (!inSrc && font===font.COURIER_NEW) {
           mark_code = true;  
@@ -655,14 +651,14 @@ function processTextElement(inSrc, txt) {
     } else { 
       if (font) {
         if (!inSrc && font===font.COURIER_NEW && reformatted_txt.getFontFamily(off - 1) != font) {
-          mark_code = true;
+          mark_code=true;
         }
       }
       if (reformatted_txt.isBold(off) && !reformatted_txt.isBold(off -1) ) { 
-        mark_bold = true;
+        mark_bold=true;
       }
       if (reformatted_txt.isItalic(off) && !reformatted_txt.isItalic(off - 1)) {
-        mark_italic = true; 
+        mark_italic=true; 
       }
     }
         
@@ -678,7 +674,7 @@ function processTextElement(inSrc, txt) {
       d1 = d1 + "*"; 
     }
     
-    var url = reformatted_txt.getLinkUrl(off);
+    var url=reformatted_txt.getLinkUrl(off);
     if (url) {
       mOut = d1 + '['+ raw_text +']('+url+')' + d2 + mOut;
     } else { 
@@ -687,7 +683,7 @@ function processTextElement(inSrc, txt) {
       mOut =  new_text + mOut;
     }
       
-    lastOff = off;  
+    lastOff=off;  
     Logger.log("Modified String: " + mOut)
   }
   
