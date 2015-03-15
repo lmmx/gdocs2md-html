@@ -20,7 +20,91 @@ function onInstall(e) {
   onOpen(e);
 }
 
+function onOpen() {
+  // Add a menu with some items, some separators, and a sub-menu.
+  setupScript();
+// In future:
+//  DocumentApp.getUi().createAddonMenu();
+  DocumentApp.getUi().createMenu('Markdown')
+      .addItem('Export \u2192 markdown', 'convertSingleDoc')
+      .addItem('Export folder \u2192 markdown', 'convertFolder')
+      .addItem('Customise markdown conversion', 'changeDefaults')
+      .addSeparator()
+      .addSubMenu(DocumentApp.getUi().createMenu('Toggle comment visibility')
+                 .addItem('Image source URLs', 'toggleImageSourceStatus')
+                 .addItem('All comments', 'toggleCommentStatus'))
+      .addItem("Add comment", 'addCommentDummy')
+      .addToUi();
+}
+
+function changeDefaults() {
+  var ui = DocumentApp.getUi();
+  var default_settings = '{ use your imagination... }';
+  var greeting = ui.alert('This should be set up to display defaults from variables passed to getDocComments etc., e.g. something like:\n\nDefault settings are:'
+                    + '\ncomments - not checking deleted comments.\nDocument - this document (alternatively specify a document ID).'
+                    + '\n\nClick OK to edit these, or cancel.',
+                    ui.ButtonSet.OK_CANCEL);
+  ui.alert("There's not really need for this yet, so this won't proceed, regardless of what you just pressed.");
+  return;
+  
+  // Future:
+  if (greeting == ui.Button.CANCEL) {
+    ui.alert("Alright, never mind!");
+    return;
+  }
+  // otherwise user clicked OK
+  // user clicked OK, to proceed with editing these defaults. Ask case by case whether to edit
+  
+  var response = ui.prompt('What is x (default y)?', ui.ButtonSet.YES_NO_CANCEL);
+ 
+  // Example code from docs at https://developers.google.com/apps-script/reference/base/button-set
+  // Process the user's response.
+  if (response.getSelectedButton() == ui.Button.YES) {
+    Logger.log('The user\'s name is %s.', response.getResponseText());
+  } else if (response.getSelectedButton() == ui.Button.NO) {
+    Logger.log('The user didn\'t want to provide a name.');
+  } else {
+    Logger.log('The user clicked the close button in the dialog\'s title bar.');
+  }
+}
+
+function setupScript() {
+  var scriptProperties = PropertiesService.getScriptProperties();
+  scriptProperties.setProperty("user_email", Drive.About.get().user.emailAddress);
+  
+  // manual way to do the following:
+  // scriptProperties.setProperty("folder_id", "INSERT_FOLDER_ID_HERE");
+  // scriptProperties.setProperty("document_id", "INSERT_FILE_ID_HERE");
+  
+  var doc_id = DocumentApp.getActiveDocument().getId();
+  scriptProperties.setProperty("document_id", doc_id);
+  var doc_parents = DriveApp.getFileById(doc_id).getParents();
+  var folders = doc_parents;
+  while (folders.hasNext()) {
+    var folder = folders.next();
+    var folder_id = folder.getId();
+  }
+  scriptProperties.setProperty("folder_id", folder_id);
+  scriptProperties.setProperty("image_folder_prefix", "/images/");
+}
+
+function addCommentDummy() {
+  // Dummy function to be switched during development for addComment  
+  DocumentApp.getUi()
+    .alert('Cancelling comment entry',
+           "There's not currently a readable anchor for Google Docs - you need to write your own!"
+           
+           + "\n\nThe infrastructure for using such an anchoring schema is sketched out in"
+           + " the exportmd.gs script's addComment function, for an anchor defined in anchor_props"
+           
+           + "\n\nSee github.com/lmmx/devnotes/wiki/Custom-Google-Docs-comment-anchoring-schema",
+           DocumentApp.getUi().ButtonSet.OK
+          );
+  return;
+}
+
 function addComment() {
+  
   var doc_id = PropertiesService.getScriptProperties().getProperty('document_id');
   var user_email = PropertiesService.getScriptProperties().getProperty('email');
 /*  Drive.Comments.insert({content: "hello world",
@@ -76,75 +160,11 @@ function insertComment(fileId, selected_text, content, user_email, anchor_props)
   Drive.Comments.insert(comment, fileId);
 }
 
-function onOpen() {
-  // Add a menu with some items (can also have separators and sub-menus).
-  setupScript();
-// In future:
-//  DocumentApp.getUi().createAddonMenu();
-  DocumentApp.getUi().createMenu('Markdown')
-      .addItem('Export \u2192 markdown', 'convertSingleDoc')
-      .addItem('Export folder \u2192 markdown', 'convertFolder')
-      .addItem('Customise markdown conversion', 'changeDefaults')
-      .addItem('Add comment', 'addComment')
-      .addToUi();
-}
-
-function changeDefaults() {
-  var ui = DocumentApp.getUi();
-  var default_settings = '{ use your imagination... }';
-  var greeting = ui.alert('This should be set up to display defaults from variables passed to getDocComments etc., e.g. something like:\n\nDefault settings are:'
-                    + '\ncomments - not checking deleted comments.\nDocument - this document (alternatively specify a document ID).'
-                    + '\n\nClick OK to edit these, or cancel.',
-                    ui.ButtonSet.OK_CANCEL);
-  ui.alert("There's not really need for this yet, so this won't proceed, regardless of what you just pressed.");
-  return;
-  
-  // Future:
-  if (greeting == ui.Button.CANCEL) {
-    ui.alert("Alright, never mind!");
-    return;
-  }
-  // otherwise user clicked OK
-  // user clicked OK, to proceed with editing these defaults. Ask case by case whether to edit
-  
-  var response = ui.prompt('What is x (default y)?', ui.ButtonSet.YES_NO_CANCEL);
- 
-  // Example code from docs at https://developers.google.com/apps-script/reference/base/button-set
-  // Process the user's response.
-  if (response.getSelectedButton() == ui.Button.YES) {
-    Logger.log('The user\'s name is %s.', response.getResponseText());
-  } else if (response.getSelectedButton() == ui.Button.NO) {
-    Logger.log('The user didn\'t want to provide a name.');
-  } else {
-    Logger.log('The user clicked the close button in the dialog\'s title bar.');
-  }
-}
-
-function setupScript() {
-  var scriptProperties = PropertiesService.getScriptProperties();
-  scriptProperties.setProperty("user_email", Drive.About.get().user.emailAddress);
-  
-  // manual way to do the following:
-  // scriptProperties.setProperty("folder_id", "INSERT_FOLDER_ID_HERE");
-  // scriptProperties.setProperty("document_id", "INSERT_FILE_ID_HERE");
-  
-  var doc_id = DocumentApp.getActiveDocument().getId();
-  scriptProperties.setProperty("document_id", doc_id);
-  var doc_parents = DriveApp.getFileById(doc_id).getParents();
-  var folders = doc_parents;
-  while (folders.hasNext()) {
-    var folder = folders.next();
-    var folder_id = folder.getId();
-  }
-  scriptProperties.setProperty("folder_id", folder_id);
-  scriptProperties.setProperty("image_folder_prefix", "/images/");
-}
-
 function getDocComments(comment_list_args) {
   if (typeof(comment_list_args) == 'undefined') {
-    var comment_list_args = {};
+    var comment_list_args = new Object();
   }
-
+  
   var possible_args = ['images', 'include_deleted'];
   for (var i in possible_args) {
     var possible_arg = possible_args[i];
@@ -188,9 +208,42 @@ function getDocComments(comment_list_args) {
   return comment_array;
 }
 
+function toggleCommentStatus(comment_switches){
+  // getDocComments(content_switches);
+}
+
+function toggleImageSourceStatus(){
+  toggleCommentStatus({images: true});
+}
+
 function getImageComments() {
   // for testing/maybe easy shorthand
-  getDocComments({images: true});
+  return getDocComments({images: true});
+}
+
+function flipResolved() {
+  // Flip the status of resolved comments to open, and open comments to resolved (respectful = true)
+  // I.e. make resolved URL-containing comments visible, without losing track of normal comments' status
+  
+  // To force all comments' statuses to switch between resolved and open en masse set respectful to false
+  
+  var switch_settings = new Object();
+    switch_settings.respectful = true;
+    switch_settings.images_only = false; // If true, only switch status of comments with an image URL
+    switch_settings.switch_deleted_comments = false; // If true, also switch status of deleted comments
+  
+  var comments_list = getDocComments(
+    { images: switch_settings.images_only,
+      include_deleted: switch_settings.switch_deleted_comments });
+  
+  // Note: these parameters are unnecessary if both false (in their absence assumed false)
+  //       but included for ease of later reuse
+    
+  if (switch_settings.respectful) {
+    // flip between
+  } else {
+    // flip all based on status of first in list
+  }
 }
 
 function convertSingleDoc() {
@@ -271,7 +324,7 @@ function convertDocumentToMarkdown(document, destination_folder) {
   var inSrc = false;
   var inClass = false;
   var globalImageCounter = 0;
-  var globalListCounters = {};
+  var globalListCounters = new Object();
   // edbacher: added a variable for indent in src <pre> block. Let style sheet do margin.
   var srcIndent = "";
   
@@ -383,7 +436,7 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
   }
   
   // Set up for real results.
-  var result = {};
+  var result = new Object();
   var pOut = "";
   var textElements = [];
   var imagePrefix = "image_";
