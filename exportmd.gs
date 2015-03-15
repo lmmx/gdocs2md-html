@@ -20,8 +20,64 @@ function onInstall(e) {
   onOpen(e);
 }
 
+function addComment() {
+  var doc_id = PropertiesService.getScriptProperties().getProperty('document_id');
+  var user_email = PropertiesService.getScriptProperties().getProperty('email');
+/*  Drive.Comments.insert({content: "hello world",
+                         context: {
+                           type: 'text/html',
+                           value: 'hinges'
+                         }
+                        }, document_id); */
+  var revision_list = Drive.Revisions.list(doc_id).items;
+  var recent_revision_id = revision_list[revision_list.length - 1].id;
+  var anchor_props = {
+    revision_id: recent_revision_id,
+    starting_offset: '',
+    offset_length: '',
+    total_chars: ''
+  }
+  insertComment(doc_id, 'hinges', 'Hello world!', my_email, anchor_props);
+}
+  
+function insertComment(fileId, selected_text, content, user_email, anchor_props) {
+  
+  /*
+  anchor_props is an object with 4 properties:
+    - revision_id,
+    - starting_offset,
+    - offset_length,
+    - total_chars
+  */
+  
+  var context = Drive.newCommentContext();
+    context.value = selected_text;
+    context.type = 'text/html';
+  var comment = Drive.newComment();
+    comment.kind = 'drive#comment';
+    var author = Drive.newUser();
+      author.kind = 'drive#user';
+      author.displayName = user_email;
+      author.isAuthenticatedUser = true;
+    comment.author = author;
+    comment.content = type; 
+    comment.context = context;
+    comment.status = 'open';
+    comment.anchor = "{'r':"
+                     + anchor_props.revision_id
+                     + ",'a':[{'txt':{'o':"
+                     + anchor_props.starting_offset
+                     + ",'l':"
+                     + anchor_props.offset_length
+                     + ",'ml':"
+                     + anchor_props.total_chars
+                     + "}}]}";
+    comment.fileId = fileId;
+  Drive.Comments.insert(comment, fileId);
+}
+
 function onOpen() {
-  // Add a menu with some items, some separators, and a sub-menu.
+  // Add a menu with some items (can also have separators and sub-menus).
   setupScript();
 // In future:
 //  DocumentApp.getUi().createAddonMenu();
@@ -29,6 +85,7 @@ function onOpen() {
       .addItem('Export \u2192 markdown', 'convertSingleDoc')
       .addItem('Export folder \u2192 markdown', 'convertFolder')
       .addItem('Customise markdown conversion', 'changeDefaults')
+      .addItem('Add comment', 'addComment')
       .addToUi();
 }
 
@@ -65,6 +122,7 @@ function changeDefaults() {
 
 function setupScript() {
   var scriptProperties = PropertiesService.getScriptProperties();
+  scriptProperties.setProperty("user_email", Drive.About.get().user.emailAddress);
   
   // manual way to do the following:
   // scriptProperties.setProperty("folder_id", "INSERT_FOLDER_ID_HERE");
