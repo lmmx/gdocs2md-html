@@ -28,7 +28,39 @@ function onOpen() {
   DocumentApp.getUi().createMenu('Markdown')
       .addItem('Export \u2192 markdown', 'convertSingleDoc')
       .addItem('Export folder \u2192 markdown', 'convertFolder')
+      .addItem('Customise markdown conversion', 'changeDefaults')
       .addToUi();
+}
+
+function changeDefaults() {
+  var ui = DocumentApp.getUi();
+  var default_settings = '{ use your imagination... }';
+  var greeting = ui.alert('This should be set up to display defaults from variables passed to getDocComments etc., e.g. something like:\n\nDefault settings are:'
+                    + '\ncomments - not checking deleted comments.\nDocument - this document (alternatively specify a document ID).'
+                    + '\n\nClick OK to edit these, or cancel.',
+                    ui.ButtonSet.OK_CANCEL);
+  ui.alert("There's not really need for this yet, so this won't proceed, regardless of what you just pressed.");
+  return;
+  
+  // Future:
+  if (greeting == ui.Button.CANCEL) {
+    ui.alert("Alright, never mind!");
+    return;
+  }
+  // otherwise user clicked OK
+  // user clicked OK, to proceed with editing these defaults. Ask case by case whether to edit
+  
+  var response = ui.prompt('What is x (default y)?', ui.ButtonSet.YES_NO_CANCEL);
+ 
+  // Example code from docs at https://developers.google.com/apps-script/reference/base/button-set
+  // Process the user's response.
+  if (response.getSelectedButton() == ui.Button.YES) {
+    Logger.log('The user\'s name is %s.', response.getResponseText());
+  } else if (response.getSelectedButton() == ui.Button.NO) {
+    Logger.log('The user didn\'t want to provide a name.');
+  } else {
+    Logger.log('The user clicked the close button in the dialog\'s title bar.');
+  }
 }
 
 function setupScript() {
@@ -277,6 +309,10 @@ function escapeHTML(text) {
   return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function standardQMarks(text) {
+  return text.replace(/\u2018|\u8216|\u2019|\u8217/g,"'").replace(/\u201c|\u8220|\u201d|\u8221/g, '"')
+}
+
 // Process each child element (not just paragraphs).
 function processParagraph(index, element, inSrc, imageCounter, listCounters, image_path) {
   // First, check for things that require no processing.
@@ -340,7 +376,7 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
       blob.setName(name);
       
       imageCounter++;
-      textElements.push('![image alt text](' + image_path + '/' + name + ')');
+      textElements.push('![](' + image_path + '/' + name + ')');
       //result.images.push( {
       //  "bytes": blob.getBytes(), 
       //  "type": contentType, 
@@ -392,7 +428,7 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
     }
 
     // replace Unicode quotation marks
-    pOut = pOut.replace('\u201d', '"').replace('\u201c', '"');
+    pOut = standardQMarks(pOut);
  
     result.text = prefix+pOut;
   }
