@@ -23,12 +23,14 @@ function onInstall(e) {
 function onOpen() {
   // Add a menu with some items, some separators, and a sub-menu.
   setupScript();
-// In future:
+//  In future:
 //  DocumentApp.getUi().createAddonMenu();
   DocumentApp.getUi().createMenu('Markdown')
-      .addItem('Export \u2192 markdown', 'convertSingleDoc')
-      .addItem('Export folder \u2192 markdown', 'convertFolder')
-      .addItem('Customise markdown conversion', 'changeDefaults')
+      .addSubMenu(DocumentApp.getUi().createMenu('Export \u2192 markdown')
+                  .addItem('Export to local file', 'convertSingleDoc')
+                  .addItem('View in browser', 'markdownPopup')
+                  .addItem('Export entire folder to local file', 'convertFolder')
+                  .addItem('Customise markdown conversion', 'changeDefaults'))
       .addSeparator()
       .addSubMenu(DocumentApp.getUi().createMenu('Toggle comment visibility')
                  .addItem('Image source URLs', 'toggleImageSourceStatus')
@@ -160,27 +162,13 @@ function insertComment(fileId, selected_text, content, user_email, anchor_props)
   Drive.Comments.insert(comment, fileId);
 }
 
-function getDocComments(comment_list_args) {
-  if (typeof(comment_list_args) == 'undefined') {
-    var comment_list_args = new Object();
-  }
-  
+
+function getDocComments(comment_list_args) {  
   var possible_args = ['images', 'include_deleted'];
-  for (var i in possible_args) {
-    var possible_arg = possible_args[i];
-    if (comment_list_args.propertyIsEnumerable(possible_arg)) {
-      eval(possible_arg + " = " + comment_list_args[possible_arg]);
-    } else {
-      eval(possible_arg + " = " + false);
-    }
-  }
+  eval('var ' + possible_args.join(','));
   
-  /*
-  Looks bad but more sensible than repeatedly checking if arg undefined.
-  
-  Sets every variable named in the possible_args array to false if
-  it wasn't passed into the comment_list_args object.
-  */
+  // initialise all possible args, then set them:
+  switchHandler(comment_list_args, possible_args)
   
   var scriptProperties = PropertiesService.getScriptProperties();
   var document_id = scriptProperties.getProperty("document_id");
@@ -189,6 +177,9 @@ function getDocComments(comment_list_args) {
                                            maxResults: 100 }); // 0 to 100, default 20
   // See https://developers.google.com/drive/v2/reference/comments/list for all options
   var comment_array = [];
+  var image_sources = [];
+  // To collect all comments' image URLs to match against inlineImage class elements LINK_URL attribute
+  
   for (var i = 0; i < comments_list.items.length; i++) {
     var comment_text = comments_list.items[i].content;
  /*
@@ -205,11 +196,13 @@ function getDocComments(comment_list_args) {
       comment_array.push(comment_text);
     }
   }
+  scriptProperties.setProperty('image_source_URLs', image_sources)
   return comment_array;
 }
 
 function toggleCommentStatus(comment_switches){
-  // getDocComments(content_switches);
+  var comment_list = getDocComments(content_switches);
+  flipResolved(comment_list); // TODO
 }
 
 function toggleImageSourceStatus(){
@@ -227,7 +220,7 @@ function flipResolved() {
   
   // To force all comments' statuses to switch between resolved and open en masse set respectful to false
   
-  var switch_settings = new Object();
+  var switch_settings = {};
     switch_settings.respectful = true;
     switch_settings.images_only = false; // If true, only switch status of comments with an image URL
     switch_settings.switch_deleted_comments = false; // If true, also switch status of deleted comments
@@ -244,6 +237,47 @@ function flipResolved() {
   } else {
     // flip all based on status of first in list
   }
+}
+
+function markdownPopup() {
+  var css_style = '<style type="text/css" data-github="https://github.com/lmmx/gdocs2md-html/blob/master/md-preview.css">'
+    + 'h1, h2, h3, h4, h5, h6 {'
+    + '  font-family: "Gibson", sans-serif, "Helvetica Neue", HelveticaNeue, Helvetica, Arial, sans-serif;'
+    + '  font-size: 1.3em;'
+    + '  line-height: 1.4;'
+    + '  margin-top: 9px;'
+    + '}'
+    + 'code,pre{'
+    + '  font-size: 12px;'
+    + '  line-height: 1.4;'
+    + '  padding-top: 1em;'
+    + '  padding-bottom: 1em;'
+    + '  clear:both;'
+    + '  padding: 0.2em;'
+    + '  margin: 0;'
+    + '  background-color: rgba(0,0,0,0.04);'
+    + '  border-radius: 3px;'
+    + '  font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;'
+    + '}'
+    + '</style>';
+  
+  // The above was written with js since <link rel="stylesheet" href=[GitHub raw URL]> doesn't work:
+  // https://gist.github.com/lmmx/ec084fc351528395f2bb
+  
+  var html5 = HtmlService.createHtmlOutput(
+    '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+    + css_style
+    + '<h1>Markdown output:</h1>'
+    + '<pre>'
+    + 'hello world !\n\n:-)'
+//    + convertSingleDoc({no_save: true})
+    + '</pre>'
+  )
+      .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+      .setWidth(400)
+      .setHeight(300);
+  DocumentApp.getUi()
+      .showModalDialog(html5, 'My custom dialog');
 }
 
 function convertSingleDoc() {
@@ -314,7 +348,41 @@ function convertFolder() {
   }
 }
 
-function convertDocumentToMarkdown(document, destination_folder) {
+function switchHandler(input_switches, potential_switches) {
+  if (typeof(input_switches) == 'undefined') {
+    var opt_switch_args = {}; // if none set, leave all optional args undefined
+  }
+  
+  // NB must have initialised all possible args before calling function:
+  // eval('var ' + potential_switches.join(','));
+  
+  for (var i in potential_switches) {
+    var possible_switch = potential_switches[i];
+    if (opt_switch_args.propertyIsEnumerable(possible_switch)) {
+      eval('var ' + possible_switch + " = " + comment_list_args[possible_switch]);
+    } else {
+      eval('var ' + possible_switch + " = false");
+    }
+  }
+  
+  /*
+  Looks bad but more sensible than repeatedly checking if arg undefined.
+  
+  Sets every variable named in the possible_args array to false if
+  it wasn't passed into the comment_list_args object, otherwise evaluates.
+  
+  Any args not passed in are false, but so are args explicitly passed in as false:
+  all parameters are therefore Boolean unless otherwise specified.
+  */
+  
+}
+
+function convertDocumentToMarkdown(document, destination_folder, optional_switches) {
+  var possible_switches = ['return_string', 'save_images'];
+  eval('var ' + possible_switches.join(','));
+  switchHandler(optional_switches, possible_switches)
+  
+  // TODO switch off image storage if true
   var scriptProperties = PropertiesService.getScriptProperties(); 
   var image_prefix = scriptProperties.getProperty("image_folder_prefix");
   var numChildren = document.getActiveSection().getNumChildren();
@@ -324,7 +392,7 @@ function convertDocumentToMarkdown(document, destination_folder) {
   var inSrc = false;
   var inClass = false;
   var globalImageCounter = 0;
-  var globalListCounters = new Object();
+  var globalListCounters = {};
   // edbacher: added a variable for indent in src <pre> block. Let style sheet do margin.
   var srcIndent = "";
   
@@ -436,7 +504,7 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
   }
   
   // Set up for real results.
-  var result = new Object();
+  var result = {};
   var pOut = "";
   var textElements = [];
   var imagePrefix = "image_";
