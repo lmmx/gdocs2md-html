@@ -365,15 +365,9 @@ function filterComments(attributes, comment_list_settings) {
 }
 
 function toggleCommentStatus(comment_switches){
-  var comment_list = getDocComments(content_switches);
-  flipResolved(comment_list); // TODO
-}
-
-function toggleImageSourceStatus(){
   // Technically just image URL-containing comments, not sources just yet
   var attribs = ['commentId', 'status'];
-  var list_settings = {images: true};
-  var comm_attribs = getCommentAttributes(attribs, list_settings);
+  var comm_attribs = getCommentAttributes(attribs, comment_switches);
   var rearrangement = [];
   comm_attribs.map(
     function(attrib_pair) { // for every comment return with the images_only / images: true comments.list setting,
@@ -397,6 +391,10 @@ function toggleImageSourceStatus(){
     }
   );
   return;
+}
+
+function toggleImageSourceStatus(){
+  toggleCommentStatus({images: true});
 }
 
 function flipResolved() {
