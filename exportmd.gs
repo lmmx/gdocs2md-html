@@ -163,10 +163,11 @@ function insertComment(fileId, selected_text, content, user_email, anchor_props)
 }
 
 
-function getDocComments(comment_list_args) {  
-  var possible_args = ['images', 'include_deleted'];
+function getDocComments(comment_list_settings) {
+  var possible_settings = ['images', 'include_deleted'];
   
-  switchHandler(comment_list_args, possible_args) // switches are set on script properties
+  // switches are processed and set on a script-wide property called "comment_switches"
+  switchHandler(comment_list_settings, possible_settings, 'comment_switches')
   
   var script_properties = PropertiesService.getScriptProperties();
   var comment_switches = script_properties.getProperty('comment_switches');
@@ -200,6 +201,118 @@ function getDocComments(comment_list_args) {
   return comment_array;
 }
 
+function getCommentAttributes(attributes, comment_list_settings) {
+  
+  /*
+   *         All possible comment attributes are listed at:
+   *   https://developers.google.com/drive/v2/reference/comments#properties
+   */
+  
+  //  Firstly, describe the type in a message to be thrown in case of TypeError:
+  
+  var attrib_def_message = "'attributes' should be a string (the attribute to get for each comment), "
+                           + "an object (a key-value pair for attribute and desired value), "
+                           + "or an array of objects (each with key-value pairs)";
+  
+  function onAttribError(message) {
+    Logger.log(message);
+    throw new TypeError(message);
+  }
+  
+  // If (optional) comment_list_settings isn't set, make a getDocComments call with switches left blank.
+  if (typeof(comment_list_settings) == 'undefined') var comment_list_settings = {};
+  
+  function isAttrib(attribute) { // Sanity check function, called per element in array
+    if (typeof(attribute) == 'string' || attributes.constructor === Object) {
+      
+      // Check against possible list of attributes (leaving out unchanging ones like kind)
+      
+      possible_attrs = [
+        'selfLink',
+        'commentId',
+        'createdDate',
+        'modifiedDate',
+        'author',
+        'htmlContent',
+        'content',
+        'deleted',
+        'status',
+        'context',
+        'anchor',
+        'fileId',
+        'fileTitle',
+        'replies',
+        'author'      
+      ];
+      
+      // Generated with Javascript, gist: https://gist.github.com/lmmx/451b301e1d78ed2c10b4
+      
+      // Return false from the function if any of the attributes specified are not in the above list
+      
+      // If an object, the name is the key, otherwise it's just the string
+      if (attribute.constructor === Object) {
+        for (n in keys(attribute)) {
+          var attribute_name = keys(attribute)[n];
+          if (possible_attrs.indexOf(attribute_name) == -1) return false
+        }
+      } else {
+        var attribute_name = attribute;
+        if (possible_attrs.indexOf(attribute_name) == -1) return false
+      }
+      
+    } else {
+      // Neither a string nor object - cannot be an attribute
+      return false;
+    }
+  }
+  
+  if (isAttrib(attributes)) { // This will be true if there's only one attribute, not provided in an array
+    
+    /*
+       Make a 1-tuple (array of 1) from either an object or a string,
+       i.e. a single attribute, with or without a defined value respectively.
+    */
+    
+    var attributes = Array(attributes);
+    
+  } else if (typeof(attributes) === Array) {
+    
+    // Check each item in the array is a valid attribute specification
+    for (var i in attributes) {
+      if (! isAttrib(attributes[i]) ) {
+        onAttribError('Error in attribute ' 
+                      + (i+1) + ' of ' + attributes.length
+                      + attrib_def_message);
+      }
+    }
+    
+  } else { // Neither attribute nor array of attributes
+    throw new TypeError(attrib_def_message);
+  }
+  
+  var comment_list = getDocComments(comment_list_settings);
+  var comment_attrib_lists = [];
+  for (var i in comment_list) {
+    var comment = comment_list[i];
+    var comment_attrib_list = [];
+    for (var j in attributes) {
+      var comment_attribute = comment_list[i][attributes[j]];
+      comment_attrib_list.push(comment_attribute);
+    }
+    comment_attrib_lists.push(comment_attrib_list);
+  }
+  // The array comment_attrib_lists is now full of the requested attributes,
+  // of length equal to that of attributes
+  return comment_attrib_lists;
+}
+
+// Example function to use getCommentAttributes:
+
+function getImageCommentIds() {
+  getCommentAttributes('Id', {images: true});
+  return;
+}
+
 function toggleCommentStatus(comment_switches){
   var comment_list = getDocComments(content_switches);
   flipResolved(comment_list); // TODO
@@ -207,11 +320,6 @@ function toggleCommentStatus(comment_switches){
 
 function toggleImageSourceStatus(){
   toggleCommentStatus({images: true});
-}
-
-function getImageComments() {
-  // for testing/maybe easy shorthand
-  return getDocComments({images: true});
 }
 
 function flipResolved() {
@@ -388,8 +496,8 @@ function switchHandler(input_switches, potential_switches, optional_storage_name
   Sets every variable named in the potential_switches array to false if
   it wasn't passed into the input_switches object, otherwise evaluates.
   
-  Any args not passed in are false, but so are args explicitly passed in as false:
-  all parameters are therefore Boolean unless otherwise specified.
+  Any arguments not passed in are false, but so are any explicitly passed in as false:
+  all parameters are therefore Boolean until otherwise specified.
   */
   
 }
