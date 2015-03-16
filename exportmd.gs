@@ -128,6 +128,8 @@ function addComment() {
   
 function insertComment(fileId, selected_text, content, user_email, anchor_props) {
   
+  // NB Deal with handling missing args
+  
   /*
   anchor_props is an object with 4 properties:
     - revision_id,
@@ -162,20 +164,27 @@ function insertComment(fileId, selected_text, content, user_email, anchor_props)
   Drive.Comments.insert(comment, fileId);
 }
 
+function decodeScriptSwitches(optional_storage_name) {
+  var property_name = (typeof(optional_storage_name) == 'string') ? optional_storage_name : 'switch_settings';
+  var script_properties = PropertiesService.getScriptProperties();
+  return script_properties
+              .getProperty(property_name)
+              .replace(/{|}/g,'')          // Get the statements out of brackets...
+              .replace(',', ';');          // ...swap the separator for a semi-colon...
+  // ...evaluate the stored object string as statements upon string return and voila, switches interpreted
+}
+
 
 function getDocComments(comment_list_settings) {
   var possible_settings = ['images', 'include_deleted'];
   
   // switches are processed and set on a script-wide property called "comment_switches"
-  switchHandler(comment_list_settings, possible_settings, 'comment_switches')
+  var property_name = 'comment_switches';
+  switchHandler(comment_list_settings, possible_settings, property_name);
   
   var script_properties = PropertiesService.getScriptProperties();
-  var comment_switches = script_properties
-              .getProperty("comment_switches")
-              .replace(/{|}/g,'')      // Get the statements out of brackets...
-              .replace(',', ';');      // ...swap the separator for a semi-colon...
+  var comment_switches = decodeScriptSwitches(property_name);
   eval(comment_switches);
-  // ...evaluate the stored object string as statements and voila, switches interpreted
   
   var document_id = script_properties.getProperty("document_id");
   var comments_list = Drive.Comments.list(document_id,
@@ -247,16 +256,16 @@ function isValidAttrib(attribute) { // Sanity check function, called per element
       }
       for (var n=0; n < att_keys.length; n++) {
         var attribute_name = att_keys[n];
-        var valid_attrib = (possible_attrs.indexOf(attribute_name) > -1);
+        var is_valid_attrib = (possible_attrs.indexOf(attribute_name) > -1);
         
         // The attribute needs to be one of the possible attributes listed above, match its given value(s),
         // else returning false will throw an error from onAttribError when within getCommentAttributes
-        if (! valid_attrib) return false;
+        return is_valid_attrib;
       }
     } else if (typeof(attribute) == 'string') {
       var attribute_name = attribute;
-      var valid_attrib = (possible_attrs.indexOf(attribute_name) > -1);
-      if (! valid_attrib) return false;
+      var is_valid_attrib = (possible_attrs.indexOf(attribute_name) > -1);
+      return is_valid_attrib;
       // Otherwise is a valid (string) attribute
     } else if (attribute.constructor === Array) {
       return false; // Again, if within getCommentAttributes this will cause an error - shouldn't pass an array
@@ -269,6 +278,19 @@ function isValidAttrib(attribute) { // Sanity check function, called per element
 }
 
 function getCommentAttributes(attributes, comment_list_settings) {
+  
+  // A filter function built on Comments.list, for a given list of attributes
+  // Objects' values are ignored here, only their property titles are used to filter comments.
+  
+  
+  /*
+    - attributes: array of attributes to filter/match on
+    - comment_list_settings: (optional) object with properties corresponding to switches in getDocComments
+    
+    This function outputs an array of the same length as the comment list, containing
+    values for all fields matched/filtered on.
+  */
+  
   
   /*
    *         All possible comment attributes are listed at:
@@ -288,6 +310,7 @@ function getCommentAttributes(attributes, comment_list_settings) {
   
   // If (optional) comment_list_settings isn't set, make a getDocComments call with switches left blank.
   if (typeof(comment_list_settings) == 'undefined') var comment_list_settings = {};
+  if (typeof(attributes) == 'undefined') onAttribError(attrib_def_message); // no variables specified
   
   if (isValidAttrib(attributes)) { // This will be true if there's only one attribute, not provided in an array
     
@@ -313,6 +336,8 @@ function getCommentAttributes(attributes, comment_list_settings) {
     throw new TypeError(attrib_def_message);
   }
   
+  // Attributes now holds an array of string and/or objects specifying a comment match and/or filter query
+  
   var comment_list = getDocComments(comment_list_settings);
   var comment_attrib_lists = [];
   for (var i in comment_list) {
@@ -331,14 +356,12 @@ function getCommentAttributes(attributes, comment_list_settings) {
 
 // Example function to use getCommentAttributes:
 
-function getImageCommentIds() {
-  var attribs = ['commentId', {status: "open"}]
-  var comm_attribs = getCommentAttributes(attribs, {images: true});
-  var n = attribs.indexOf('commentId') // no need to keep track of commentID array position
+function filterComments(attributes, comment_list_settings) {  
+  var comment_attributes = getCommentAttributes(attributes, comment_list_settings);
+  var m = attribs.indexOf('commentId') // no need to keep track of commentID array position
   comm_attribs.map(function(attrib_pair) {
      if (attrib_pair[1]);
   })
-  return;
 }
 
 function toggleCommentStatus(comment_switches){
@@ -347,7 +370,33 @@ function toggleCommentStatus(comment_switches){
 }
 
 function toggleImageSourceStatus(){
-  toggleCommentStatus({images: true});
+  // Technically just image URL-containing comments, not sources just yet
+  var attribs = ['commentId', 'status'];
+  var list_settings = {images: true};
+  var comm_attribs = getCommentAttributes(attribs, list_settings);
+  var rearrangement = [];
+  comm_attribs.map(
+    function(attrib_pair) { // for every comment return with the images_only / images: true comments.list setting,
+      switch (attrib_pair[1]){ // check the status of each
+        case 'open':
+          rearrangement.push([attrib_pair[0],'resolved']);
+          break;
+        case 'resolved':
+          rearrangement.push([attrib_pair[0],'open']);
+          break;
+      }
+    }
+  );
+  var script_properties = PropertiesService.getScriptProperties();
+  var doc_id = script_properties.getProperty("document_id");
+  rearrangement.map(
+    function(new_attrib_pair) { // for every comment ID with flipped status
+      Drive.Comments.patch('{"status": "'
+                           + new_attrib_pair[1]
+                           + '"}', doc_id, new_attrib_pair[0])
+    }
+  );
+  return;
 }
 
 function flipResolved() {
@@ -532,7 +581,7 @@ function switchHandler(input_switches, potential_switches, optional_storage_name
 
 function convertDocumentToMarkdown(document, destination_folder, optional_switches) {
   var possible_switches = ['return_string', 'save_images'];
-  switchHandler(optional_switches, possible_switches);
+  switchHandler(optional_switches, possible_switches, 'conversion_switches');
   
   // TODO switch off image storage if save_images is true
   var script_properties = PropertiesService.getScriptProperties(); 
