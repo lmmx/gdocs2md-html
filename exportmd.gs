@@ -170,7 +170,13 @@ function getDocComments(comment_list_settings) {
   switchHandler(comment_list_settings, possible_settings, 'comment_switches')
   
   var script_properties = PropertiesService.getScriptProperties();
-  var comment_switches = script_properties.getProperty('comment_switches');
+  var comment_switches = script_properties
+              .getProperty("comment_switches")
+              .replace(/{|}/g,'')      // Get the statements out of brackets...
+              .replace(',', ';');      // ...swap the separator for a semi-colon...
+  eval(comment_switches);
+  // ...evaluate the stored object string as statements and voila, switches interpreted
+  
   var document_id = script_properties.getProperty("document_id");
   var comments_list = Drive.Comments.list(document_id,
                                           {includeDeleted: include_deleted,
@@ -201,6 +207,55 @@ function getDocComments(comment_list_settings) {
   return comment_array;
 }
 
+function isAttrib(attribute) { // Sanity check function, called per element in array
+  
+  // Possible list of attributes to check against (leaving out unchanging ones like kind)
+
+  possible_attrs = [
+    'selfLink',
+    'commentId',
+    'createdDate',
+    'modifiedDate',
+    'author',
+    'htmlContent',
+    'content',
+    'deleted',
+    'status',
+    'context',
+    'anchor',
+    'fileId',
+    'fileTitle',
+    'replies',
+    'author'      
+  ];
+
+  if (typeof(attribute) == 'string' || typeof(attributes) == 'object') {  
+//  if (typeof(attribute) == 'string' || attributes.constructor === Object) {
+    // Either a string/object (1-tuple)
+        
+    // Generated with Javascript, gist: https://gist.github.com/lmmx/451b301e1d78ed2c10b4
+    
+    // Return false from the function if any of the attributes specified are not in the above list
+    
+    // If an object, the name is the key, otherwise it's just the string
+    if (attribute.constructor === Object) {
+      for (n in keys(attribute)) {
+        var attribute_name = keys(attribute)[n];
+        return (possible_attrs.indexOf(attribute_name) > -1);
+      }
+    } else {
+      var attribute_name = attribute;
+      return (possible_attrs.indexOf(attribute_name) > -1);
+      // Otherwise is a valid (string) attribute
+    }
+//  } else if (attributes.constructor === Array) {
+//    for (a in attributes.length) {
+//      var attrib = attributes[a];
+//      if (! isAttrib(attrib)) return false;
+//    }
+  } else return false; // Neither string/object / array of strings &/or objects - not a valid attribute
+}
+
 function getCommentAttributes(attributes, comment_list_settings) {
   
   /*
@@ -222,50 +277,6 @@ function getCommentAttributes(attributes, comment_list_settings) {
   // If (optional) comment_list_settings isn't set, make a getDocComments call with switches left blank.
   if (typeof(comment_list_settings) == 'undefined') var comment_list_settings = {};
   
-  function isAttrib(attribute) { // Sanity check function, called per element in array
-    if (typeof(attribute) == 'string' || attributes.constructor === Object) {
-      
-      // Check against possible list of attributes (leaving out unchanging ones like kind)
-      
-      possible_attrs = [
-        'selfLink',
-        'commentId',
-        'createdDate',
-        'modifiedDate',
-        'author',
-        'htmlContent',
-        'content',
-        'deleted',
-        'status',
-        'context',
-        'anchor',
-        'fileId',
-        'fileTitle',
-        'replies',
-        'author'      
-      ];
-      
-      // Generated with Javascript, gist: https://gist.github.com/lmmx/451b301e1d78ed2c10b4
-      
-      // Return false from the function if any of the attributes specified are not in the above list
-      
-      // If an object, the name is the key, otherwise it's just the string
-      if (attribute.constructor === Object) {
-        for (n in keys(attribute)) {
-          var attribute_name = keys(attribute)[n];
-          if (possible_attrs.indexOf(attribute_name) == -1) return false
-        }
-      } else {
-        var attribute_name = attribute;
-        if (possible_attrs.indexOf(attribute_name) == -1) return false
-      }
-      
-    } else {
-      // Neither a string nor object - cannot be an attribute
-      return false;
-    }
-  }
-  
   if (isAttrib(attributes)) { // This will be true if there's only one attribute, not provided in an array
     
     /*
@@ -275,7 +286,7 @@ function getCommentAttributes(attributes, comment_list_settings) {
     
     var attributes = Array(attributes);
     
-  } else if (typeof(attributes) === Array) {
+  } else if (attributes.constructor === Array) {
     
     // Check each item in the array is a valid attribute specification
     for (var i in attributes) {
@@ -309,7 +320,7 @@ function getCommentAttributes(attributes, comment_list_settings) {
 // Example function to use getCommentAttributes:
 
 function getImageCommentIds() {
-  getCommentAttributes('Id', {images: true});
+  var comm_attribs = getCommentAttributes('commentId', {images: true});
   return;
 }
 
