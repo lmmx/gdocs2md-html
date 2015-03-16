@@ -207,10 +207,9 @@ function getDocComments(comment_list_settings) {
   return comment_array;
 }
 
-function isAttrib(attribute) { // Sanity check function, called per element in array
+function isValidAttrib(attribute) { // Sanity check function, called per element in array
   
   // Possible list of attributes to check against (leaving out unchanging ones like kind)
-
   possible_attrs = [
     'selfLink',
     'commentId',
@@ -228,31 +227,44 @@ function isAttrib(attribute) { // Sanity check function, called per element in a
     'replies',
     'author'      
   ];
+  
+  // Check if attribute(s) provided can be used to match/filter comments:
 
-  if (typeof(attribute) == 'string' || typeof(attributes) == 'object') {  
-//  if (typeof(attribute) == 'string' || attributes.constructor === Object) {
+  if (typeof(attribute) == 'string' || typeof(attribute) == 'object') {  
     // Either a string/object (1-tuple)
-        
+    
     // Generated with Javascript, gist: https://gist.github.com/lmmx/451b301e1d78ed2c10b4
     
     // Return false from the function if any of the attributes specified are not in the above list
     
     // If an object, the name is the key, otherwise it's just the string
     if (attribute.constructor === Object) {
-      for (n in keys(attribute)) {
-        var attribute_name = keys(attribute)[n];
-        return (possible_attrs.indexOf(attribute_name) > -1);
+      var att_keys = [];
+      for (var att_key in attribute) {
+        if (attribute.hasOwnProperty(att_key)) {
+          att_keys.push(att_key);
+        }
       }
-    } else {
+      for (var n=0; n < att_keys.length; n++) {
+        var attribute_name = att_keys[n];
+        var valid_attrib = (possible_attrs.indexOf(attribute_name) > -1);
+        
+        // The attribute needs to be one of the possible attributes listed above, match its given value(s),
+        // else returning false will throw an error from onAttribError when within getCommentAttributes
+        if (! valid_attrib) return false;
+      }
+    } else if (typeof(attribute) == 'string') {
       var attribute_name = attribute;
-      return (possible_attrs.indexOf(attribute_name) > -1);
+      var valid_attrib = (possible_attrs.indexOf(attribute_name) > -1);
+      if (! valid_attrib) return false;
       // Otherwise is a valid (string) attribute
+    } else if (attribute.constructor === Array) {
+      return false; // Again, if within getCommentAttributes this will cause an error - shouldn't pass an array
+    } else {
+      // Wouldn't expect this to happen, so give a custom error message
+      Logger.log('Unknown type (assumed impossible) passed to isValidAttrib: ', attribute, attribute.constructor);
+      throw new TypeError('Unknown passed to isValidAttrib - this should be receiving 1-tuples only, see logs for details.');      
     }
-//  } else if (attributes.constructor === Array) {
-//    for (a in attributes.length) {
-//      var attrib = attributes[a];
-//      if (! isAttrib(attrib)) return false;
-//    }
   } else return false; // Neither string/object / array of strings &/or objects - not a valid attribute
 }
 
@@ -277,7 +289,7 @@ function getCommentAttributes(attributes, comment_list_settings) {
   // If (optional) comment_list_settings isn't set, make a getDocComments call with switches left blank.
   if (typeof(comment_list_settings) == 'undefined') var comment_list_settings = {};
   
-  if (isAttrib(attributes)) { // This will be true if there's only one attribute, not provided in an array
+  if (isValidAttrib(attributes)) { // This will be true if there's only one attribute, not provided in an array
     
     /*
        Make a 1-tuple (array of 1) from either an object or a string,
@@ -287,13 +299,13 @@ function getCommentAttributes(attributes, comment_list_settings) {
     var attributes = Array(attributes);
     
   } else if (attributes.constructor === Array) {
-    
+        
     // Check each item in the array is a valid attribute specification
-    for (var i in attributes) {
-      if (! isAttrib(attributes[i]) ) {
+    for (var l = 0; l < attributes.length; l++) {
+      if (! isValidAttrib(attributes[l]) ) {
         onAttribError('Error in attribute ' 
-                      + (i+1) + ' of ' + attributes.length
-                      + attrib_def_message);
+                      + (l+1) + ' of ' + attributes.length
+                      + '\n\n' + + attrib_def_message);
       }
     }
     
@@ -320,7 +332,12 @@ function getCommentAttributes(attributes, comment_list_settings) {
 // Example function to use getCommentAttributes:
 
 function getImageCommentIds() {
-  var comm_attribs = getCommentAttributes('commentId', {images: true});
+  var attribs = ['commentId', {status: "open"}]
+  var comm_attribs = getCommentAttributes(attribs, {images: true});
+  var n = attribs.indexOf('commentId') // no need to keep track of commentID array position
+  comm_attribs.map(function(attrib_pair) {
+     if (attrib_pair[1]);
+  })
   return;
 }
 
