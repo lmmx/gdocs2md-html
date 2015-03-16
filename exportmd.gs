@@ -165,11 +165,8 @@ function insertComment(fileId, selected_text, content, user_email, anchor_props)
 
 function getDocComments(comment_list_args) {  
   var possible_args = ['images', 'include_deleted'];
-  eval('var ' + possible_args.join(','));
   
-  // initialise all possible args, then set them:
-  // function localSwitchHandler() {switchHandler.bind(this)};
-  switchHandler(comment_list_args, possible_args) // variables are set on script properties
+  switchHandler(comment_list_args, possible_args) // switches are set on script properties
   
   var script_properties = PropertiesService.getScriptProperties();
   var comment_switches = script_properties.getProperty('comment_switches');
@@ -351,22 +348,39 @@ function convertFolder() {
   }
 }
 
-function switchHandler(input_switches, potential_switches) {
-  if (typeof(input_switches) == 'undefined') {
-    input_switches = {}; // if none set, leave all optional args undefined
-  }
+function switchHandler(input_switches, potential_switches, optional_storage_name) {
   
-  // NB must have initialised all possible args before calling function:
-  // eval('var ' + potential_switches.join(','));
-    
+  // Firstly, if no input switches were set, make an empty input object
+  if (typeof(input_switches) == 'undefined') input_switches = {};
+  
+  // Use optional storage name if it's defined (must be a string), else use default variable name "switch_settings"
+  var property_name = (typeof(optional_storage_name) == 'string') ? optional_storage_name : 'switch_settings';
+  
+  // Make a blank object to be populated and stored as the script-wide property named after property_name
+  var switch_settings = {};
+  
   for (var i in potential_switches) {
     var potential_switch = potential_switches[i];
+    
+    // If each switch has been set (in input_switches), evaluate it, else assume it's switched off (false):
+    
     if (input_switches.propertyIsEnumerable(potential_switch)) {
-      eval(potential_switch + " = " + input_switches[potential_switch]);
+      
+      // Evaluates a string representing a statement which sets switch_settings properties from input_switches
+      // e.g. "switch_settings.images = true" when input_switches = {images: true}
+      
+      eval('switch_settings.' + potential_switch + " = " + input_switches[potential_switch]);
+      
     } else {
-      eval(potential_switch + " = false");
+      
+      // Alternatively, the evaluated statement sets anything absent from the input_switches object as false
+      // e.g. "switch_settings.images = false" when input_switches = {} and potential_switches = ['images']
+      
+      eval('switch_settings.' + potential_switch + " = false");
     }
   }
+  
+  PropertiesService.getScriptProperties().setProperty(property_name, switch_settings);
   
   /*
   Looks bad but more sensible than repeatedly checking if arg undefined.
@@ -382,10 +396,9 @@ function switchHandler(input_switches, potential_switches) {
 
 function convertDocumentToMarkdown(document, destination_folder, optional_switches) {
   var possible_switches = ['return_string', 'save_images'];
-  eval('var ' + possible_switches.join(','));
-  switchHandler(optional_switches, possible_switches)
+  switchHandler(optional_switches, possible_switches);
   
-  // TODO switch off image storage if true
+  // TODO switch off image storage if save_images is true
   var script_properties = PropertiesService.getScriptProperties(); 
   var image_prefix = script_properties.getProperty("image_folder_prefix");
   var numChildren = document.getActiveSection().getNumChildren();
