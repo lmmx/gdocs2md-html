@@ -71,23 +71,23 @@ function changeDefaults() {
 }
 
 function setupScript() {
-  var scriptProperties = PropertiesService.getScriptProperties();
-  scriptProperties.setProperty("user_email", Drive.About.get().user.emailAddress);
+  var script_properties = PropertiesService.getScriptProperties();
+  script_properties.setProperty("user_email", Drive.About.get().user.emailAddress);
   
   // manual way to do the following:
-  // scriptProperties.setProperty("folder_id", "INSERT_FOLDER_ID_HERE");
-  // scriptProperties.setProperty("document_id", "INSERT_FILE_ID_HERE");
+  // script_properties.setProperty("folder_id", "INSERT_FOLDER_ID_HERE");
+  // script_properties.setProperty("document_id", "INSERT_FILE_ID_HERE");
   
   var doc_id = DocumentApp.getActiveDocument().getId();
-  scriptProperties.setProperty("document_id", doc_id);
+  script_properties.setProperty("document_id", doc_id);
   var doc_parents = DriveApp.getFileById(doc_id).getParents();
   var folders = doc_parents;
   while (folders.hasNext()) {
     var folder = folders.next();
     var folder_id = folder.getId();
   }
-  scriptProperties.setProperty("folder_id", folder_id);
-  scriptProperties.setProperty("image_folder_prefix", "/images/");
+  script_properties.setProperty("folder_id", folder_id);
+  script_properties.setProperty("image_folder_prefix", "/images/");
 }
 
 function addCommentDummy() {
@@ -168,10 +168,12 @@ function getDocComments(comment_list_args) {
   eval('var ' + possible_args.join(','));
   
   // initialise all possible args, then set them:
-  switchHandler(comment_list_args, possible_args)
+  // function localSwitchHandler() {switchHandler.bind(this)};
+  switchHandler(comment_list_args, possible_args) // variables are set on script properties
   
-  var scriptProperties = PropertiesService.getScriptProperties();
-  var document_id = scriptProperties.getProperty("document_id");
+  var script_properties = PropertiesService.getScriptProperties();
+  var comment_switches = script_properties.getProperty('comment_switches');
+  var document_id = script_properties.getProperty("document_id");
   var comments_list = Drive.Comments.list(document_id,
                                           {includeDeleted: include_deleted,
                                            maxResults: 100 }); // 0 to 100, default 20
@@ -181,22 +183,23 @@ function getDocComments(comment_list_args) {
   // To collect all comments' image URLs to match against inlineImage class elements LINK_URL attribute
   
   for (var i = 0; i < comments_list.items.length; i++) {
-    var comment_text = comments_list.items[i].content;
+    var comment = comments_list.items[i];
+    var comment_text = comment.content;
+    var comment_status = comment.status;
  /*
     images is a generic parameter passed in as a switch to
     return image URL-containing comments only.
     
     If the parameter is provided, it's no longer undefined.
  */
-    if (images) {
-      if (/(https?:\/\/.+?\.(png|gif|jpe?g))/.test(comment_text)) {
-        comment_array.push(RegExp.$1);
-      } // otherwise there's no image URL here, skip it
-    } else { 
-      comment_array.push(comment_text);
-    }
+    var img_url_regex = /(https?:\/\/.+?\.(png|gif|jpe?g))/;
+    var has_img_url = img_url_regex.test(comment_text);
+    
+    if (images && !has_img_url) continue; // no image URL, don't store comment
+    if (has_img_url) image_sources.push(RegExp.$1);
+    comment_array.push(comment);
   }
-  scriptProperties.setProperty('image_source_URLs', image_sources)
+  script_properties.setProperty('image_source_URLs', image_sources)
   return comment_array;
 }
 
@@ -281,14 +284,14 @@ function markdownPopup() {
 }
 
 function convertSingleDoc() {
-  var scriptProperties = PropertiesService.getScriptProperties();
+  var script_properties = PropertiesService.getScriptProperties();
   // renew comments list on every export
   var doc_comments = getDocComments();
   var image_urls = getDocComments({images: true}); // NB assumed false - any value will do
-  scriptProperties.setProperty("comments", doc_comments);
-  scriptProperties.setProperty("image_srcs", image_urls);
-  var folder_id = scriptProperties.getProperty("folder_id");
-  var document_id = scriptProperties.getProperty("document_id");
+  script_properties.setProperty("comments", doc_comments);
+  script_properties.setProperty("image_srcs", image_urls);
+  var folder_id = script_properties.getProperty("folder_id");
+  var document_id = script_properties.getProperty("document_id");
   var source_folder = DriveApp.getFolderById(folder_id);
   var markdown_folders = source_folder.getFoldersByName("Markdown");
 
@@ -304,8 +307,8 @@ function convertSingleDoc() {
 }
 
 function convertFolder() {
-  var scriptProperties = PropertiesService.getScriptProperties(); 
-  var folder_id = scriptProperties.getProperty("folder_id");
+  var script_properties = PropertiesService.getScriptProperties(); 
+  var folder_id = script_properties.getProperty("folder_id");
   var source_folder = DriveApp.getFolderById(folder_id);
   var markdown_folders = source_folder.getFoldersByName("Markdown");
   
@@ -350,26 +353,26 @@ function convertFolder() {
 
 function switchHandler(input_switches, potential_switches) {
   if (typeof(input_switches) == 'undefined') {
-    var opt_switch_args = {}; // if none set, leave all optional args undefined
+    input_switches = {}; // if none set, leave all optional args undefined
   }
   
   // NB must have initialised all possible args before calling function:
   // eval('var ' + potential_switches.join(','));
-  
+    
   for (var i in potential_switches) {
-    var possible_switch = potential_switches[i];
-    if (opt_switch_args.propertyIsEnumerable(possible_switch)) {
-      eval('var ' + possible_switch + " = " + comment_list_args[possible_switch]);
+    var potential_switch = potential_switches[i];
+    if (input_switches.propertyIsEnumerable(potential_switch)) {
+      eval(potential_switch + " = " + input_switches[potential_switch]);
     } else {
-      eval('var ' + possible_switch + " = false");
+      eval(potential_switch + " = false");
     }
   }
   
   /*
   Looks bad but more sensible than repeatedly checking if arg undefined.
   
-  Sets every variable named in the possible_args array to false if
-  it wasn't passed into the comment_list_args object, otherwise evaluates.
+  Sets every variable named in the potential_switches array to false if
+  it wasn't passed into the input_switches object, otherwise evaluates.
   
   Any args not passed in are false, but so are args explicitly passed in as false:
   all parameters are therefore Boolean unless otherwise specified.
@@ -383,8 +386,8 @@ function convertDocumentToMarkdown(document, destination_folder, optional_switch
   switchHandler(optional_switches, possible_switches)
   
   // TODO switch off image storage if true
-  var scriptProperties = PropertiesService.getScriptProperties(); 
-  var image_prefix = scriptProperties.getProperty("image_folder_prefix");
+  var script_properties = PropertiesService.getScriptProperties(); 
+  var image_prefix = script_properties.getProperty("image_folder_prefix");
   var numChildren = document.getActiveSection().getNumChildren();
   var text = "";
   var Rmd_filename = document.getName()+".Rmd";
