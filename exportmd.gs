@@ -433,6 +433,7 @@ function markdownPopup() {
     + 'code,pre{'
     + '  font-size: 12px;'
     + '  line-height: 1.4;'
+    + '  white-space: pre-wrap;'
     + '  padding-top: 1em;'
     + '  padding-bottom: 1em;'
     + '  clear:both;'
@@ -442,28 +443,46 @@ function markdownPopup() {
     + '  border-radius: 3px;'
     + '  font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;'
     + '}'
+    + 'pre textarea {'
+    + '    background: transparent;'
+    + '    border: none;'
+    + '    height: inherit !important;'
+    + '    width: 375px;'
+    + '}'
+    + 'pre {'
+    + '    height: 230px;'
+    + '}'
     + '</style>';
   
   // The above was written with js since <link rel="stylesheet" href=[GitHub raw URL]> doesn't work:
   // https://gist.github.com/lmmx/ec084fc351528395f2bb
   
+  var mdstring = stringMiddleMan();
+  
   var html5 = HtmlService.createHtmlOutput(
     '<!doctype html><html lang="en"><head><meta charset="utf-8">'
     + css_style
     + '<h1>Markdown output:</h1>'
-    + '<pre>'
-    + 'hello world !\n\n:-)'
-//    + convertSingleDoc({no_save: true})
-    + '</pre>'
+    + '<pre><textarea onclick="this.focus();this.select()">'
+    + mdstring
+//    + convertSingleDoc({"return_string": true})
+    + '</textarea></pre>'
   )
       .setSandboxMode(HtmlService.SandboxMode.IFRAME)
       .setWidth(400)
       .setHeight(300);
   DocumentApp.getUi()
-      .showModalDialog(html5, 'My custom dialog');
+      .showModalDialog(html5, 'Markdown output');
 }
 
-function convertSingleDoc() {
+function stringMiddleMan() {
+  var returned_string;
+  convertSingleDoc({"return_string": true}); // for some reason needs the scope to be already set...
+  // could probably rework to use mdstring rather than returned_string, cut out middle man function
+  return this.returned_string;
+}
+
+function convertSingleDoc(optional_switches) {
   var script_properties = PropertiesService.getScriptProperties();
   // renew comments list on every export
   var doc_comments = getDocComments();
@@ -483,7 +502,7 @@ function convertSingleDoc() {
     markdown_folder = source_folder.createFolder("Markdown")
   }
   
-  convertDocumentToMarkdown(DocumentApp.openById(document_id), markdown_folder);  
+  convertDocumentToMarkdown(DocumentApp.openById(document_id), markdown_folder, optional_switches);  
 }
 
 function convertFolder() {
@@ -578,11 +597,16 @@ function switchHandler(input_switches, potential_switches, optional_storage_name
 }
 
 function convertDocumentToMarkdown(document, destination_folder, optional_switches) {
-  var possible_switches = ['return_string', 'save_images'];
-  switchHandler(optional_switches, possible_switches, 'conversion_switches');
+  // if returning a string, force_save_images will make the script continue - experimental
+  var possible_switches = ['return_string', 'force_save_images'];
+  var property_name = 'conversion_switches';
+  switchHandler(optional_switches, possible_switches, property_name);
   
-  // TODO switch off image storage if save_images is true
-  var script_properties = PropertiesService.getScriptProperties(); 
+  // TODO switch off image storage if force_save_images is true - not necessary for normal behaviour
+  var script_properties = PropertiesService.getScriptProperties();
+  var comment_switches = decodeScriptSwitches(property_name);
+  eval(comment_switches);
+  
   var image_prefix = script_properties.getProperty("image_folder_prefix");
   var numChildren = document.getActiveSection().getNumChildren();
   var text = "";
@@ -642,6 +666,15 @@ function convertDocumentToMarkdown(document, destination_folder, optional_switch
     }
       
   }
+  
+  if (return_string && !force_save_images) {
+    returned_string = text;
+    return returned_string;
+  }
+  // return the string rather than continuing to write files
+  
+  // I don't need to handle string return *with* saved images yet so this flag doesn't do anything in absence of return_string
+  
   files.push({"fileName": md_filename, "mimeType": "text/plain", "content": text});
     
   
@@ -667,7 +700,7 @@ function convertDocumentToMarkdown(document, destination_folder, optional_switch
     destination_folder.addFolder(image_folder)
   }
   
-  for (var i = 0; i < files.length; i++) { 
+  for (var i = 0; i < files.length; i++) {
     var saved_file; 
     if (files[i].blob) {
       saved_file = DriveApp.createFile(files[i].blob)
