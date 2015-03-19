@@ -8,6 +8,7 @@ h1, h2, h3, h4, h5, h6 {
 code,pre{
   font-size: 12px;
   line-height: 1.4;
+  white-space: pre-wrap;
   padding-top: 1em;
   padding-bottom: 1em;
   clear:both;
