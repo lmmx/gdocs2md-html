@@ -18,3 +18,14 @@ code,pre{
   border-radius: 3px;
   font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
 }
+
+pre textarea {
+    background: transparent;
+    border: none;
+    height: inherit !important;
+    width: 375px;
+}
+
+pre {
+    height: 230px;
+}
