@@ -1,26 +1,9 @@
 gdocs2md-html
 =============
 
-A simple Google Apps script to convert a properly formatted Google Drive Document to the markdown (.md) format. Fork of the gdocs2md repository — there've been many (180 at time of writing!), and some collation of changes between them could be valuable.
+A simple Google Apps script to convert a properly formatted Google Drive Document to the markdown (.md) format.
 
-Feel free to change the hooks yourself - e.g. the `--- src` ... `---` fences could demarcate `<blockquote>` / `</blockquote>` tags - you're free to edit the script when installing.
-
-**Note**: needs advanced Drive API enabling in Script Editor on first use (just [a few clicks from the menu](https://github.com/lmmx/devnotes/wiki/Enabling-advanced-Drive-API)).
-
-* `Resources` menu ⇢ `Advanced Google Services`, enable the Drive API by clicking the switch next to its name
-* The link below the API list to the dev console project page for the script you're editing will become clickable
-  * At the link, again click the on/off switch on the advanced Drive API setting
-* If the script doesn't refresh automatically at this point, hit `Ctrl/Cmd` + `S` to save it, select `onInstall` from the functions dropdown menu at the top of the page and to the left of that click the play icon to run.
-* If you go back to your document a `Markdown` menu will be sitting there, with a dropdown to `Export markdown` > `View in browser`
-  * When you finish writing, this markdown can be pasted straight into a suitable publisher.
-  * HTML tags are supported in markdown, but feel free to add your own hooks in the source code, or modify the existing ones.
-
-Related:
-
-* [devnotes: Custom application to open .gdoc extensions](https://github.com/lmmx/devnotes/wiki/Custom-application-to-open-.gdoc-extensions)
-* [devnotes: Google drive gdoc download conversion workaround](https://github.com/lmmx/devnotes/wiki/Google-drive-gdoc-download-conversion-workaround)
-
-## Usage
+## Brief installation
 
   * Adding this script to your doc (once per doc):
     * Open your Google Drive document (http://drive.google.com)
@@ -28,14 +11,31 @@ Related:
     * Clear the default Code.gs file and paste the contents of [exportmd.gs](https://raw.githubusercontent.com/lmmx/gdocs2md-html/master/exportmd.gs) into the code editor
     * File -> Save (or `Ctrl`/`⌘` + `S`)
     * When prompted enter new project name for '*Untitled project*', e.g. '*gdocs2md*'
-    
+
+**Note**: now needs advanced Drive API enabling in Script Editor on first use (just [a few clicks from the menu](https://github.com/lmmx/devnotes/wiki/Enabling-advanced-Drive-API)).
+
+* `Resources` menu ⇢ `Advanced Google Services`, enable the Drive API by clicking the switch next to its name
+* The link below the API list to the dev console project page for the script you're editing will become clickable
+  * At the link, again click the on/off switch on the advanced Drive API setting
+* If the script doesn't refresh automatically at this point, hit `Ctrl/Cmd` + `S` to save it, select `onInstall` from the functions dropdown menu at the top of the page and to the left of that click the play icon to run.
+* If you go back to your document a `Markdown` menu will be sitting there, with a dropdown to `Export markdown` > `View in browser`
+
+When you finish writing, this markdown can be pasted straight into a suitable publisher.
+
+  * HTML tags are supported in markdown, but feel free to add your own hooks in the source code, or modify the existing ones.
+  * Feel free to change the hooks yourself - e.g. the `--- src` ... `---` fences could demarcate `<blockquote>` / `</blockquote>` tags - you're free to edit the script when installing.
+
+Related:
+
+* [devnotes: Custom application to open .gdoc extensions](https://github.com/lmmx/devnotes/wiki/Custom-application-to-open-.gdoc-extensions)
+* [devnotes: Google drive gdoc download conversion workaround](https://github.com/lmmx/devnotes/wiki/Google-drive-gdoc-download-conversion-workaround)
+
   * Running the script:
     - Select `setupScript` from the script editor's dropdown menu and the play symbol button (on the left of the dropdown) to run it
     - Likewise for the `convertSingleDoc` function, or for batch processing on a folder use the `convertFolder` function.
     - The first run will require you to authorize the app.
     - Converted doc will be saved in the Markdown sub-directory, images below that (`/assets/images`).
 
-*NB* don't use on a top-level document (that is, in the root Drive folder). See my comment in the setupScript function.
 
 ## Interpreted formats
   * Text:
