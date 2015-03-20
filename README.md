@@ -20,7 +20,11 @@ A simple Google Apps script to convert a properly formatted Google Drive Documen
 * If the script doesn't refresh automatically at this point, hit `Ctrl/Cmd` + `S` to save it, select `onInstall` from the functions dropdown menu at the top of the page and to the left of that click the play icon to run.
 * If you go back to your document a `Markdown` menu will be sitting there, with a dropdown to `Export markdown` > `View in browser`
 
-When you finish writing, this markdown can be pasted straight into a suitable publisher.
+![](https://github.com/lmmx/gdocs2md-html/blob/master/menu.png?raw=true)
+
+> Menu added to Google Docs. Note: customisation/comments features work in progress, see [script](https://github.com/lmmx/gdocs2md-html/blob/master/exportmd.gs)
+
+When you finish writing, the markdown (via the `View in browser` button) can be pasted straight into a suitable publisher.
 
   * HTML tags are supported in markdown, but feel free to add your own hooks in the source code, or modify the existing ones.
   * Feel free to change the hooks yourself - e.g. the `--- src` ... `---` fences could demarcate `<blockquote>` / `</blockquote>` tags - you're free to edit the script when installing.
