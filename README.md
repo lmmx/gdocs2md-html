@@ -3,14 +3,22 @@ gdocs2md-html
 
 A simple Google Apps script to convert a properly formatted Google Drive Document to the markdown (.md) format. Fork of the gdocs2md repository — there've been many (180 at time of writing!), and some collation of changes between them could be valuable.
 
+Feel free to change the hooks yourself - e.g. the `--- src` ... `---` fences could demarcate `<blockquote>` / `</blockquote>` tags - you're free to edit the script when installing.
+
+**Note**: needs advanced Drive API enabling in Script Editor on first use (just [a few clicks from the menu](https://github.com/lmmx/devnotes/wiki/Enabling-advanced-Drive-API)).
+
+* `Resources` menu ⇢ `Advanced Google Services`, enable the Drive API by clicking the switch next to its name
+* The link below the API list to the dev console project page for the script you're editing will become clickable
+  * At the link, again click the on/off switch on the advanced Drive API setting
+* If the script doesn't refresh automatically at this point, hit `Ctrl/Cmd` + `S` to save it, select `onInstall` from the functions dropdown menu at the top of the page and to the left of that click the play icon to run.
+* If you go back to your document a `Markdown` menu will be sitting there, with a dropdown to `Export markdown` > `View in browser`
+  * When you finish writing, this markdown can be pasted straight into a suitable publisher.
+  * HTML tags are supported in markdown, but feel free to add your own hooks in the source code, or modify the existing ones.
+
 Related:
 
 * [devnotes: Custom application to open .gdoc extensions](https://github.com/lmmx/devnotes/wiki/Custom-application-to-open-.gdoc-extensions)
 * [devnotes: Google drive gdoc download conversion workaround](https://github.com/lmmx/devnotes/wiki/Google-drive-gdoc-download-conversion-workaround)
-
-## To-do list
-
-- [x] Fork (technically [didn't fork](http://kroltech.com/2014/01/quick-tip-how-to-fork-your-own-repo-in-github/)) and go back to markdown for HTML usage
 
 ## Usage
 
