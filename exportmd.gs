@@ -26,9 +26,9 @@ function onOpen() {
 //  In future:
 //  DocumentApp.getUi().createAddonMenu();
   DocumentApp.getUi().createMenu('Markdown')
+      .addItem('View as markdown', 'markdownPopup')
       .addSubMenu(DocumentApp.getUi().createMenu('Export \u2192 markdown')
                   .addItem('Export to local file', 'convertSingleDoc')
-                  .addItem('View in browser', 'markdownPopup')
                   .addItem('Export entire folder to local file', 'convertFolder')
                   .addItem('Customise markdown conversion', 'changeDefaults'))
       .addSeparator()
@@ -430,7 +430,7 @@ function markdownPopup() {
     + '  line-height: 1.4;'
     + '  margin-top: 9px;'
     + '}'
-    + 'code,pre{'
+    + 'code,pre,pre *{'
     + '  font-size: 12px;'
     + '  line-height: 1.4;'
     + '  white-space: pre-wrap;'
@@ -441,16 +441,16 @@ function markdownPopup() {
     + '  margin: 0;'
     + '  background-color: rgba(0,0,0,0.04);'
     + '  border-radius: 3px;'
-    + '  font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;'
+    + '  font: 11px Consolas, "Liberation Mono", Menlo, Courier, monospace;'
     + '}'
     + 'pre textarea {'
     + '    background: transparent;'
     + '    border: none;'
     + '    height: inherit !important;'
-    + '    width: 375px;'
+    + '    width: 775px;'
     + '}'
     + 'pre {'
-    + '    height: 230px;'
+    + '    height: 430px;'
     + '}'
     + '</style>';
   
@@ -462,15 +462,14 @@ function markdownPopup() {
   var html5 = HtmlService.createHtmlOutput(
     '<!doctype html><html lang="en"><head><meta charset="utf-8">'
     + css_style
-    + '<h1>Markdown output:</h1>'
     + '<pre><textarea onclick="this.focus();this.select()">'
     + mdstring
 //    + convertSingleDoc({"return_string": true})
     + '</textarea></pre>'
   )
       .setSandboxMode(HtmlService.SandboxMode.IFRAME)
-      .setWidth(400)
-      .setHeight(300);
+      .setWidth(800)
+      .setHeight(500);
   DocumentApp.getUi()
       .showModalDialog(html5, 'Markdown output');
 }
@@ -826,7 +825,7 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
     result.sourcePretty = "end";
     result.inClass = "end";
   } else if (/^\s*---\s+jsperf\s*([^ ]+)\s*$/.test(pOut)) {
-    result.text = '<iframe style="width: 100%; height: 340px; overflow: hidden; border: 0;" '+
+    result.text = '<iframe style="width: 100%; height: 240px; overflow: hidden; border: 0;" '+
                   'src="http://www.html5rocks.com/static/jsperfview/embed.html?id='+RegExp.$1+
                   '"></iframe>';
   } else {
