@@ -628,10 +628,16 @@ function convertDocumentToMarkdown(document, destination_folder, optional_switch
     var result = processParagraph(i, child, inSrc, globalImageCounter, globalListCounters, image_prefix + image_foldername);
     globalImageCounter += (result && result.images) ? result.images.length : 0;
     if (result!==null) {
-      if (result.sourcePretty==="start" && !inSrc) {
+      if (result.sourceGlossary==="start" && !inSrc) {
         inSrc=true;
-        text+="<pre class=\"prettyprint\">\n";
-      } else if (result.sourcePretty==="end" && inSrc) {
+        text+="<pre class=\"glossary\">\n";
+      } else if (result.sourceGlossary==="end" && inSrc) {
+        inSrc=false;
+        text+="</pre>\n\n";
+      } else if (result.sourceFigCap==="start" && !inSrc) {
+        inSrc=true;
+        text+="<pre class=\"glossary\">\n";
+      } else if (result.sourceFigCap==="end" && inSrc) {
         inSrc=false;
         text+="</pre>\n\n";
       } else if (result.source==="start" && !inSrc) {
@@ -811,10 +817,12 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
     return result;
   }
   
-  // evb: Add source pretty too. (And abbreviations: src and srcp.)
+  // evb: Add glossary and figure caption too. (And abbreviations: gloss and fig-cap.)
   // process source code block:
-  if (/^\s*---\s+srcp\s*$/.test(pOut) || /^\s*---\s+source pretty\s*$/.test(pOut)) {
-    result.sourcePretty = "start";
+  if (/^\s*---\s+gloss\s*$/.test(pOut) || /^\s*---\s+source glossary\s*$/.test(pOut)) {
+    result.sourceGlossary = "start";
+  } else if (/^\s*---\s+fig-cap\s*$/.test(pOut) || /^\s*---\s+source fig-cap\s*$/.test(pOut)) {
+    result.sourceFigCap = "start";
   } else if (/^\s*---\s+src\s*$/.test(pOut) || /^\s*---\s+source code\s*$/.test(pOut)) {
     result.source = "start";
   } else if (/^\s*---\s+class\s+([^ ]+)\s*$/.test(pOut)) {
@@ -822,7 +830,8 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
     result.className = RegExp.$1;
   } else if (/^\s*---\s*$/.test(pOut)) {
     result.source = "end";
-    result.sourcePretty = "end";
+    result.sourceGlossary = "end";
+    result.sourceFigCap = "end";
     result.inClass = "end";
   } else if (/^\s*---\s+jsperf\s*([^ ]+)\s*$/.test(pOut)) {
     result.text = '<iframe style="width: 100%; height: 240px; overflow: hidden; border: 0;" '+
