@@ -25,9 +25,9 @@ When you finish writing, this markdown can be pasted straight into a suitable pu
   * HTML tags are supported in markdown, but feel free to add your own hooks in the source code, or modify the existing ones.
   * Feel free to change the hooks yourself - e.g. the `--- src` ... `---` fences could demarcate `<blockquote>` / `</blockquote>` tags - you're free to edit the script when installing.
 
-Related:
+Related tips/tricks:
 
-* [devnotes: Custom application to open .gdoc extensions](https://github.com/lmmx/devnotes/wiki/Custom-application-to-open-.gdoc-extensions)
+* [devnotes: Custom application to open .gdoc extensions (unix)](https://github.com/lmmx/devnotes/wiki/Custom-application-to-open-.gdoc-extensions)
 * [devnotes: Google drive gdoc download conversion workaround](https://github.com/lmmx/devnotes/wiki/Google-drive-gdoc-download-conversion-workaround)
 
   * Running the script:
