@@ -459,17 +459,18 @@ function markdownPopup() {
   
   var mdstring = stringMiddleMan();
   
-  var html5 = HtmlService.createHtmlOutput(
-    '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+  var htmlstring =
+      '<!doctype html><html lang="en"><head><meta charset="utf-8">'
     + css_style
-    + '<pre><textarea onclick="this.focus();this.select()">'
+    + '</head><body><pre><textarea id="md-output">'
     + mdstring
-//    + convertSingleDoc({"return_string": true})
-    + '</textarea></pre>'
-  )
+    + '</textarea></pre></body></html>';
+
+  var html5 = HtmlService.createHtmlOutput(htmlstring)
       .setSandboxMode(HtmlService.SandboxMode.IFRAME)
       .setWidth(800)
       .setHeight(500);
+  
   DocumentApp.getUi()
       .showModalDialog(html5, 'Markdown output');
 }
@@ -774,6 +775,7 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
       pOut += txt.getText();
       textElements.push(txt);
     } else if (t === DocumentApp.ElementType.INLINE_IMAGE) {
+      var imglink = element.getChild(i).getLinkUrl();
       result.images = result.images || [];
       var blob = element.getChild(i).getBlob()
       var contentType = blob.getContentType();
@@ -792,7 +794,11 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
       blob.setName(name);
       
       imageCounter++;
-      textElements.push('![](' + image_path + '/' + name + ')');
+      if (!return_string || force_save_images) {
+        textElements.push('![](' + image_path + '/' + name + ')');
+      } else {
+        textElements.push('![](' + imglink + ')');
+      }
       //result.images.push( {
       //  "bytes": blob.getBytes(), 
       //  "type": contentType, 
@@ -827,7 +833,7 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
     result.source = "start";
   } else if (/^\s*---\s+class\s+([^ ]+)\s*$/.test(pOut)) {
     result.inClass = "start";
-    result.className = RegExp.$1;
+    result.className = RegExp.$1.replace(/\./g,' ');
   } else if (/^\s*---\s*$/.test(pOut)) {
     result.source = "end";
     result.sourceGlossary = "end";
