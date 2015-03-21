@@ -462,9 +462,14 @@ function markdownPopup() {
   var htmlstring =
       '<!doctype html><html lang="en"><head><meta charset="utf-8">'
     + css_style
-    + '</head><body><pre><textarea id="md-output">'
+    + '</head><body><pre><textarea id="md-output" readonly="readonly">'
     + mdstring
-    + '</textarea></pre></body></html>';
+    + '</textarea></pre><script type="text/javascript">'
+    + 'function mdClick() {'
+    + 'var textbox = document.getElementById("md-output");'
+    + 'textbox.setAttribute("onclick", "this.focus(); this.select();") }'
+    + 'window.onload = mdClick();'
+    + '</script></body></html>';
 
   var html5 = HtmlService.createHtmlOutput(htmlstring)
       .setSandboxMode(HtmlService.SandboxMode.IFRAME)
