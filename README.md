@@ -47,6 +47,8 @@ Related tips/tricks:
     * text styled as heading 1, 2, 3, etc is converted to Markdown heading: #, ##, ###, etc
     * text formatted with Courier New is backquoted: ``text``
     * links are converted to MD format: `[anchortext](url)`
+    * indented paragraphs are rendered as `> <sub>` (`blockquote sub`) blocks - to just use `blockquote` change the `indent_prefix` variable to just `> `
+    * sub- and superscript text is tagged appropriately (`<sup>`/`<sub>`)
   * Lists:
     * Numbered lists are converted correctly, including nested lists
     * bullet lists are converted to "`*`" Markdown format appropriately, including nested lists
