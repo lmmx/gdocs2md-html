@@ -828,6 +828,17 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
     return result;
   }
   
+  var ind_f = element.getIndentFirstLine();
+  var ind_s = element.getIndentStart();
+  var ind_e = element.getIndentEnd();
+  var i_fse = ['ind_f','ind_s','ind_e'];
+  var indents = {};
+  for (indt=0;indt<i_fse.length;indt++) {
+    var indname = i_fse[indt];
+    if (eval(indname) !== null) indents[indname] = eval(indname);
+  }
+  var inIndent = (Object.keys(indents).length > 0);
+  
   // evb: Add glossary and figure caption too. (And abbreviations: gloss and fig-cap.)
   // process source code block:
   if (/^\s*---\s+gloss\s*$/.test(pOut) || /^\s*---\s+source glossary\s*$/.test(pOut)) {
@@ -862,6 +873,9 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
  
     result.text = prefix+pOut;
   }
+  
+  var indent_prefix = '> <sub>';
+  if (inIndent) result.text = indent_prefix + result.text;
   
   return result;
 }
