@@ -917,7 +917,7 @@ function processTextElement(inSrc, txt) {
     return pOut;
   }
   
-  Logger.log("Initial String: " + pOut)
+//  Logger.log("Initial String: " + pOut)
  
   // CRC introducing reformatted_txt to let us apply rational formatting that we can actually parse
   var reformatted_txt = txt.copy();
@@ -929,11 +929,12 @@ function processTextElement(inSrc, txt) {
   // We will run through this loop multiple times for the things we care about.
   // Font
   // URL
+  // Then for alignment
   // Then for bold
-  // Then for italiac.
+  // Then for italic.
   
   // FONTs
-  var lastOff = pOut.length;
+  var lastOff = pOut.length; // loop goes backwards, so this holds
   for (var i=attrs.length-1; i>=0; i--) {
     var off=attrs[i];
     var font=txt.getFontFamily(off)
@@ -965,7 +966,22 @@ function processTextElement(inSrc, txt) {
     lastOff=off;  
   }  
   
-   // bold
+  // alignment
+  var lastOff=pOut.length;
+  for (var i=attrs.length-1; i>=0; i--) {
+    var off=attrs[i];
+    var alignment=txt.getTextAlignment(off);
+     if (alignment) { // 
+       while (i>=1 && txt.getTextAlignment(attrs[i-1]) == alignment) {
+          i-=1;
+          off=attrs[i];
+       }
+     reformatted_txt.setTextAlignment(off, lastOff-1, alignment); 
+     }
+    lastOff=off;  
+  }
+
+  // bold
   var lastOff=pOut.length;
   for (var i=attrs.length-1; i>=0; i--) {
     var off=attrs[i];
@@ -998,12 +1014,12 @@ function processTextElement(inSrc, txt) {
   
   var mOut=""; // Modified out string
   var harmonized_attrs = reformatted_txt.getTextAttributeIndices();
-  reformatted_txt.getTextAttributeIndices();
+  reformatted_txt.getTextAttributeIndices(); // @lmmx: is this a typo...?
   pOut = reformatted_txt.getText(); 
   
   
   // Markdown is farily picky about how it will let you intersperse spaces around words and strong/italics chars. This regex (hopefully) clears this up
-  // Match any number of \*, followed by spaces/workd boundaries against anything that is not the \*, followed by boundaries, spaces and * again. 
+  // Match any number of \*, followed by spaces/word boundaries against anything that is not the \*, followed by boundaries, spaces and * again. 
   // Test case at http://jsfiddle.net/ovqLv0s9/2/
 
   var reAlignStars = /(\*+)(\s*\b)([^\*]+)(\b\s*)(\*+)/g;
@@ -1014,14 +1030,16 @@ function processTextElement(inSrc, txt) {
     
     var raw_text = pOut.substring(off, lastOff) 
  
-    var d1 = ""
-    var d2 = ""; 
+    var d1 = ""; // @lmmx: build up a modifier prefix
+    var d2 = ""; // @lmmx: ...and suffix
     
     var end_font; 
     
     var mark_bold = false; 
-    var mark_italic =  false; 
+    var mark_italic = false; 
     var mark_code = false;
+    var mark_sup = false;
+    var mark_sub = false;
         
     // The end of the text block is a special case. 
     if (lastOff == pOut.length) {  
@@ -1038,6 +1056,12 @@ function processTextElement(inSrc, txt) {
         // edbacher: changed this to handle bold italic properly.
         mark_italic = true; 
       }
+      if (reformatted_txt.getTextAlignment(lastOff - 1)===DocumentApp.TextAlignment.SUPERSCRIPT) {
+        mark_sup = true;
+      }
+      if (reformatted_txt.getTextAlignment(lastOff - 1)===DocumentApp.TextAlignment.SUBSCRIPT) {
+        mark_sub = true;
+      } 
     } else { 
       end_font = reformatted_txt.getFontFamily(lastOff -1 )
       if (end_font) {
@@ -1051,22 +1075,38 @@ function processTextElement(inSrc, txt) {
       if (reformatted_txt.isItalic(lastOff - 1) && !reformatted_txt.isItalic(lastOff)) {
         mark_italic=true; 
       }
+      if (reformatted_txt.getTextAlignment(lastOff - 1)===DocumentApp.TextAlignment.SUPERSCRIPT) {
+        if (reformatted_txt.getTextAlignment(lastOff)!==DocumentApp.TextAlignment.SUPERSCRIPT) {
+          mark_sup = true;
+        }
+      }
+      if (reformatted_txt.getTextAlignment(lastOff - 1)===DocumentApp.TextAlignment.SUBSCRIPT) {
+        if (reformatted_txt.getTextAlignment(lastOff)!==DocumentApp.TextAlignment.SUBSCRIPT) {
+          mark_sub = true;
+        }
+      }
     }
     
     if (mark_code) { 
-      d2 = '`';  
+      d2 = '`'; // shouldn't these go last? or will it interfere w/ reAlignStars?
     }
     if (mark_bold) { 
-      d2 = "**" + d2; 
+      d2 = "**" + d2;
     }
     if (mark_italic) {
-      d2 = "*" + d2; 
+      d2 = "*" + d2;
+    }
+    if (mark_sup) {
+      d2 = '</sup>' + d2;
+    }
+    if (mark_sub) {
+      d2 = '</sub>' + d2;
     }
     
-    mark_bold = mark_italic =  mark_code = false; 
+    mark_bold = mark_italic = mark_code = mark_sup = mark_sub = false; 
     
     var font=reformatted_txt.getFontFamily(off);
-   if (off == 0) {   
+    if (off == 0) {
       if (font) {
         if (!inSrc && font===font.COURIER_NEW) {
           mark_code = true;  
@@ -1077,6 +1117,12 @@ function processTextElement(inSrc, txt) {
       }
       if (reformatted_txt.isItalic(off)) {
         mark_italic = true; 
+      }
+      if (reformatted_txt.getTextAlignment(off)===DocumentApp.TextAlignment.SUPERSCRIPT) {
+        mark_sup = true;
+      }
+      if (reformatted_txt.getTextAlignment(off)===DocumentApp.TextAlignment.SUBSCRIPT) {
+        mark_sub = true;
       }
     } else { 
       if (font) {
@@ -1090,10 +1136,21 @@ function processTextElement(inSrc, txt) {
       if (reformatted_txt.isItalic(off) && !reformatted_txt.isItalic(off - 1)) {
         mark_italic=true; 
       }
+      if (reformatted_txt.getTextAlignment(off)===DocumentApp.TextAlignment.SUPERSCRIPT) {
+        if (reformatted_txt.getTextAlignment(off - 1)!==DocumentApp.TextAlignment.SUPERSCRIPT) {
+          mark_sup = true;
+        }
+      }
+      if (reformatted_txt.getTextAlignment(off)===DocumentApp.TextAlignment.SUBSCRIPT) {
+        if (reformatted_txt.getTextAlignment(off - 1)!==DocumentApp.TextAlignment.SUBSCRIPT) {
+          mark_sub = true;
+        }
+      }
     }
+    
         
     if (mark_code) {
-        d1 = '`'; 
+      d1 = '`'; 
     }    
     
     if (mark_bold) {
@@ -1102,6 +1159,14 @@ function processTextElement(inSrc, txt) {
     
     if (mark_italic) {
       d1 = d1 + "*"; 
+    }
+    
+    if (mark_sup) {
+      d1 = d1 + '<sup>';
+    }
+    
+    if (mark_sub) {
+      d1 = d1 + '<sub>';
     }
     
     var url=reformatted_txt.getLinkUrl(off);
@@ -1114,7 +1179,7 @@ function processTextElement(inSrc, txt) {
     }
       
     lastOff=off;  
-    Logger.log("Modified String: " + mOut)
+//    Logger.log("Modified String: " + mOut)
   }
   
   mOut = pOut.substring(0, off) + mOut;    
