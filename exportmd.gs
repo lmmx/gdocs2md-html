@@ -875,7 +875,14 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
   }
   
   var indent_prefix = '> <sub>';
-  if (inIndent) result.text = indent_prefix + result.text;
+  var indent_alt_prefix = '> ';
+  if (inIndent && !inSrc) {
+    if (/^#*\s/.test(result.text)) { // don't subscript-prefix header prefix
+      result.text = indent_alt_prefix + result.text;
+    } else {
+      result.text = indent_prefix + result.text;
+    }
+  }
   
   return result;
 }
