@@ -1002,6 +1002,21 @@ function processTextElement(inSrc, txt) {
     lastOff=off;  
   }
 
+  // strike
+  var lastOff=pOut.length;
+  for (var i=attrs.length-1; i>=0; i--) {
+    var off=attrs[i];
+    var strike=txt.isStrikethrough(off);
+     if (strike) {
+       while (i>=1 && txt.isStrikethrough(attrs[i-1])) {
+          i-=1;
+          off=attrs[i];
+       }
+     reformatted_txt.setStrikethrough(off, lastOff-1, strike); 
+     }
+    lastOff=off;  
+  }
+
   // bold
   var lastOff=pOut.length;
   for (var i=attrs.length-1; i>=0; i--) {
@@ -1061,6 +1076,7 @@ function processTextElement(inSrc, txt) {
     var mark_code = false;
     var mark_sup = false;
     var mark_sub = false;
+    var mark_strike = false;
         
     // The end of the text block is a special case. 
     if (lastOff == pOut.length) {  
@@ -1077,6 +1093,9 @@ function processTextElement(inSrc, txt) {
         // edbacher: changed this to handle bold italic properly.
         mark_italic = true; 
       }
+      if (reformatted_txt.isStrikethrough(lastOff - 1)) {
+        mark_strike = true;
+      }
       if (reformatted_txt.getTextAlignment(lastOff - 1)===DocumentApp.TextAlignment.SUPERSCRIPT) {
         mark_sup = true;
       }
@@ -1092,6 +1111,9 @@ function processTextElement(inSrc, txt) {
       }
       if (reformatted_txt.isBold(lastOff - 1) && !reformatted_txt.isBold(lastOff) ) { 
         mark_bold=true;
+      }
+      if (reformatted_txt.isStrikethrough(lastOff - 1) && !reformatted_txt.isStrikethrough(lastOff)) {
+        mark_strike=true;
       }
       if (reformatted_txt.isItalic(lastOff - 1) && !reformatted_txt.isItalic(lastOff)) {
         mark_italic=true; 
@@ -1117,6 +1139,9 @@ function processTextElement(inSrc, txt) {
     if (mark_italic) {
       d2 = "*" + d2;
     }
+    if (mark_strike) {
+      d2 = "</strike>" + d2;
+    }
     if (mark_sup) {
       d2 = '</sup>' + d2;
     }
@@ -1124,7 +1149,7 @@ function processTextElement(inSrc, txt) {
       d2 = '</sub>' + d2;
     }
     
-    mark_bold = mark_italic = mark_code = mark_sup = mark_sub = false; 
+    mark_bold = mark_italic = mark_code = mark_sup = mark_sub = mark_strike = false; 
     
     var font=reformatted_txt.getFontFamily(off);
     if (off == 0) {
@@ -1138,6 +1163,9 @@ function processTextElement(inSrc, txt) {
       }
       if (reformatted_txt.isItalic(off)) {
         mark_italic = true; 
+      }
+      if (reformatted_txt.isStrikethrough(off)) {
+        mark_strike = true;
       }
       if (reformatted_txt.getTextAlignment(off)===DocumentApp.TextAlignment.SUPERSCRIPT) {
         mark_sup = true;
@@ -1156,6 +1184,9 @@ function processTextElement(inSrc, txt) {
       }
       if (reformatted_txt.isItalic(off) && !reformatted_txt.isItalic(off - 1)) {
         mark_italic=true; 
+      }
+      if (reformatted_txt.isStrikethrough(off) && !reformatted_txt.isStrikethrough(off - 1)) {
+        mark_strike=true;
       }
       if (reformatted_txt.getTextAlignment(off)===DocumentApp.TextAlignment.SUPERSCRIPT) {
         if (reformatted_txt.getTextAlignment(off - 1)!==DocumentApp.TextAlignment.SUPERSCRIPT) {
@@ -1188,6 +1219,10 @@ function processTextElement(inSrc, txt) {
     
     if (mark_sub) {
       d1 = d1 + '<sub>';
+    }
+    
+    if (mark_strike) {
+      d1 = d1 + '<strike>';
     }
     
     var url=reformatted_txt.getLinkUrl(off);
