@@ -87,7 +87,7 @@ function setupScript() {
     var folder_id = folder.getId();
   }
   script_properties.setProperty("folder_id", folder_id);
-  script_properties.setProperty("image_folder_prefix", "/images/");
+  script_properties.setProperty("image_folder_prefix", "Markdown/");
 }
 
 function addCommentDummy() {
