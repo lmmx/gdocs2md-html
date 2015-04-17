@@ -835,7 +835,8 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
   var indents = {};
   for (indt=0;indt<i_fse.length;indt++) {
     var indname = i_fse[indt];
-    if (eval(indname) !== null) indents[indname] = eval(indname);
+    if (eval(indname) > 0) indents[indname] = eval(indname);
+    // lazy test, null (no indent) is not greater than zero, but becomes set if indent 'undone'
   }
   var inIndent = (Object.keys(indents).length > 0);
   
