@@ -60,6 +60,9 @@ Related tips/tricks:
     * Source code: 
       * **UPDATED**: blocks of text delimited by "--- source code" or "--- src" and "---" are converted to `<pre></pre>`
       * **NEW**: blocks of text delimited by "--- source pretty" or "--- srcp" and "---" are converted to `<pre class="prettyprint"></pre>`
+      * **NEW**: blocks of text delimited by "--- gloss" and "---" are converted to `<pre class="glossary"></pre>`
+      * **NEW**: blocks of text delimited by "--- fig-cap" and "---" are converted to `<pre class="fig-cap"></pre>` (figure captions)
+       * (feel free to change these for your own needs)
     * Tables:
       * **NEW**: Simple `<table>` processing
   * "--- jsperf `<testID>`" is replaced by an iframe that shows an interactive chart of a JSPerf test. The `<testID>` is the last part of the URL of the Browserscope anchor in your JSPerf test. Something like `"agt1YS1wcm9maWxlcnINCxIEVGVzdBjlm_EQDA"` in the URL `http://www.browserscope.org/user/tests/table/agt1YS1wcm9maWxlcnINCxIEVGVzdBjlm_EQDA`
