@@ -827,16 +827,19 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
     // Isn't result empty now?
     return result;
   }
-  
-  var ind_f = element.getIndentFirstLine();
-  var ind_s = element.getIndentStart();
-  var ind_e = element.getIndentEnd();
-  var i_fse = ['ind_f','ind_s','ind_e'];
+
   var indents = {};
-  for (indt=0;indt<i_fse.length;indt++) {
-    var indname = i_fse[indt];
-    if (eval(indname) > 0) indents[indname] = eval(indname);
-    // lazy test, null (no indent) is not greater than zero, but becomes set if indent 'undone'
+  if (element.getType() !== DocumentApp.ElementType.TABLE) {
+    var ind_f = element.getIndentFirstLine();
+    var ind_s = element.getIndentStart();
+    var ind_e = element.getIndentEnd();
+    var i_fse = ['ind_f','ind_s','ind_e'];
+    
+    for (indt=0;indt<i_fse.length;indt++) {
+      var indname = i_fse[indt];
+      if (eval(indname) > 0) indents[indname] = eval(indname);
+      // lazy test, null (no indent) is not greater than zero, but becomes set if indent 'undone'
+    }
   }
   var inIndent = (Object.keys(indents).length > 0);
   
@@ -876,7 +879,8 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
   }
   
   var indent_prefix = '> ';
-# var indent_alt_prefix = '> <sub>';
+  
+  var indent_alt_prefix = '> <sub>';
   if (inIndent && !inSrc) {
     if (/^#*\s/.test(result.text)) { // don't subscript-prefix header prefix
       result.text = indent_alt_prefix + result.text;
@@ -884,7 +888,6 @@ function processParagraph(index, element, inSrc, imageCounter, listCounters, ima
       result.text = indent_prefix + result.text;
     }
   }
-  
   return result;
 }
 
